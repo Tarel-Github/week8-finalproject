@@ -1,4 +1,4 @@
-const VoteRepository = require("./vote.repository");
+const VoteRepository = require("../repositories/vote.repository");
 
 class VoteService {
     voteRepository = new VoteRepository();
@@ -23,6 +23,15 @@ class VoteService {
         return deleteVote
     }
 
+    vote = async (userId, choiceId, voteData) => {
+        let vote
+        if(vote ===1){
+            vote = await this.voteRepository.vote_1(userId, choiceId, voteData);
+        }else{
+            vote = await this.voteRepository.vote_2(userId, choiceId, voteData);
+        }       
+        return vote;
+    }
 
 
 }

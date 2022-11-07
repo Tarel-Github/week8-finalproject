@@ -1,4 +1,4 @@
-const VoteService = require('./vote.service');
+const VoteService = require('../services/vote.service');
 
 class VoteController {
     voteService = new VoteService();
@@ -51,6 +51,28 @@ class VoteController {
             const deleteVote = await this.voteService.deleteVote(userId, choiceId);
             res.status(200).json({data: deleteVote});
         }catch(err){
+            next(err);
+        }
+    }
+
+    vote = async (req, res, next) =>{
+        try{
+            const {userId} = req.params.user;
+            const {choiceId} = req.params;
+            const {voteData} = req.body;
+            let vote
+            if(!choiceId)throw new Error("없는 게시글 입니다.")
+            if(voteData === 1 || voteData ===2){
+                vote = await this.voteService.vote(userId, choiceId, voteData);
+            }else{
+                throw new Error("잘못된 접근 입니다.")
+            }
+
+            res.status(200).json({message: '투표 성공'});
+
+
+        }
+        catch(err){
             next(err);
         }
     }

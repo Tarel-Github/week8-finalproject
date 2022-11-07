@@ -27,6 +27,14 @@ class VoteRepository {
         return deleteVote;
     }
 
+    vote_1 = async (userId, choiceId, voteData) => {
+        const choice = await Vote.findByPk(choiceId); 
+        
+    }
+
+    vote_2 = async (userId, choiceId, voteData) => {
+        
+    }
 
 }
 
