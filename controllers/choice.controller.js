@@ -1,9 +1,9 @@
-const VoteService = require('../services/vote.service');
+const ChoiceService = require('../services/Choice.service');
 
-class VoteController {
-    voteService = new VoteService();
+class ChoiceController {
+    choiceService = new ChoiceService();
 
-    createVote = async (req, res, next) =>{
+    createchoice = async (req, res, next) =>{
         try{
             const {userId} = req.params.user;
             const {title, choice1Name, choice2Name, endTime} = req.body;
@@ -13,8 +13,8 @@ class VoteController {
                 return;
             }
 
-            const createVote = await this.voteService.createVote(title, choice1Name, choice2Name, endTime)
-            res.status(201).send({data: createVote});  
+            const createchoice = await this.choiceService.createchoice(title, choice1Name, choice2Name, endTime)
+            res.status(201).send({data: createchoice});  
 
         }catch(err){
             next(err);
@@ -22,48 +22,47 @@ class VoteController {
 
     }
 
-    allVote = async (req, res, next) =>{
+    allchoice = async (req, res, next) =>{
         try{
-            const allVote = await this.voteService.findAllVote();
-            res.status(200).json({data:allVote});
+            const allchoice = await this.choiceService.findAllchoice();
+            res.status(200).json({data:allchoice});
 
         }catch(err){
             next(err);
         }
     }
 
-    myVote = async (req, res, next) =>{
+    mychoice = async (req, res, next) =>{
         try{
             const {userId} = req.params.user;
-            const myVote = await this.voteService.findMyVote(userId);
-            res.status(200).json({data: myVote});
+            const mychoice = await this.choiceService.findMychoice(userId);
+            res.status(200).json({data: mychoice});
         }catch(err){
             next(err);
         }
     }
 
-    deleteVote = async (req, res, next) =>{
+    deletechoice = async (req, res, next) =>{
         try{
             const {userId} = req.params.user;
             const {choiceId} = req.params;
             if(!userId) throw new Error("없는 게시글 입니다.")
 
-            const deleteVote = await this.voteService.deleteVote(userId, choiceId);
-            res.status(200).json({data: deleteVote});
+            const deletechoice = await this.choiceService.deletechoice(userId, choiceId);
+            res.status(200).json({data: deletechoice});
         }catch(err){
             next(err);
         }
     }
 
-    vote = async (req, res, next) =>{
+    choice = async (req, res, next) =>{
         try{
             const {userId} = req.params.user;
             const {choiceId} = req.params;
-            const {voteData} = req.body;
-            let vote
+            const {choiceNum} = req.body;
             if(!choiceId)throw new Error("없는 게시글 입니다.")
-            if(voteData === 1 || voteData ===2){
-                vote = await this.voteService.vote(userId, choiceId, voteData);
+            if(choiceNum === 1 || choiceNum ===2){
+                 const choice = await this.choiceService.choice(userId, choiceId, choiceNum);
             }else{
                 throw new Error("잘못된 접근 입니다.")
             }
@@ -80,4 +79,4 @@ class VoteController {
 
 }
 
-module.exports = VoteController;
+module.exports = ChoiceController;
