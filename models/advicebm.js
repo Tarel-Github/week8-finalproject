@@ -1,7 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class AdviceImage extends Model {
+  class AdviceBM extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -12,53 +12,40 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "adviceId",
         targetKey: "adviceId",
       });
-    //   this.hasMany(models.Comment, {
-    //     foreignKey: "adviceId",
-    //     sourceKey: "adviceId",
-    //   });
-    //   this.hasMany(models.Save, {
-    //     foreignKey: "adviceId",
-    //     sourceKey: "adviceId",
-    //   });
+      this.belongsTo(models.User, {
+        foreignKey: "userKey",
+        targetKey: "userKey",
+      });
     }
   }
-  AdviceImage.init(
+  AdviceBM.init(
     {
-      adviceimageId: {
+      adviceBMId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: DataTypes.INTEGER,
       },
       adviceId: {
-        allowNull: false,
         type: DataTypes.INTEGER,
         references: {
           model: "Advice",
           key: "adviceId",
         },
       },
-      adviceImage: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-    //   isSave: {
-    //     type: DataTypes.BOOLEAN,
-    //     allowNull: true,
-    //   },
-      createdAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
+      userKey: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: "User",
+          key: "userKey",
+        },
       },
     },
     {
       sequelize,
-      modelName: "AdviceImage",
+      modelName: "AdviceBM",
+      timestamps: false,
     }
   );
-  return AdviceImage;
+  return AdviceBM;
 };

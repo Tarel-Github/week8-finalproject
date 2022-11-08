@@ -10,42 +10,40 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       this.hasMany(models.Advice, {
         foreignKey: "userKey",
-        targetKey: "userKey",
+        sourceKey: "userKey",
       });
 
       this.hasMany(models.Choice, {
         foreignKey: "userKey",
-        targetKey: "userKey",
+        sourceKey: "userKey",
       });
 
       this.hasMany(models.Comment, {
         foreignKey: "userKey",
-        targetKey: "userKey",
+        sourceKey: "userKey",
       });
 
       //투표여부
       this.hasMany(models.isChoice, {
         foreignKey: "userKey",
-        targetKey: "userKey",
+        sourceKey: "userKey",
       });
-
-
       // this.hasMany(models.Choice, {
-      //   foreignKey: "userId",
-      //   targetKey: "userId",
+      //   foreignKey: "userKey",
+      //   sourceKey: "userKey",
       // });
       // this.hasMany(models.Comment, {
-      //   foreignKey: "userId",
-      //   targetKey: "userId",
+      //   foreignKey: "userKey",
+      //   sourceKey: "userKey",
       // });
-      // this.hasMany(models.AdviceBookmark, {
-      //   foreignKey: "userId",
-      //   targetKey: "userId",
-      // });
-      // this.hasMany(models.ChoicecBookmark, {
-      //   foreignKey: "userId",
-      //   targetKey: "userId",
-      // });
+      this.hasMany(models.AdviceBM, {
+        foreignKey: "userKey",
+        sourceKey: "userKey",
+      });
+      this.hasMany(models.ChoiceBM, {
+        foreignKey: "userKey",
+        sourceKey: "userKey",
+      });
     }
   }
   User.init(
@@ -68,6 +66,14 @@ module.exports = (sequelize, DataTypes) => {
       password: {
         allowNull: false,
         type: DataTypes.STRING,
+      },
+      isAdult: {
+        allowNull: true,
+        type: DataTypes.BOOLEAN,
+      },
+      userImg: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,
