@@ -34,10 +34,10 @@ class UserService {
 
     if (!passwordVerify) throw new ErrorCustom(400, "비밀번호 오류");
     const accessToken = jwt.sign(
-      { userId: user.userId },
+      { userId: user.userId, userKey: user.userKey },
       process.env.SECRET_KEY,
       {
-        expiresIn: "60s",
+        expiresIn: "100s",
       }
     );
 
@@ -64,9 +64,41 @@ class UserService {
   mainPage = async (userKey) => {
     const getChoice = await this.choiceRepository.choiceHot(userKey);
 
+    const choiceData = getChoice.map((post) => {
+      let boolean;
+      post.ChoiceBMs.length ? (boolean = true) : (boolean = false);
+      return {
+        choiceId: post.choiceId,
+        title: post.title,
+        choice1Name: post.choice1Name,
+        choice2Name: post.choice2Name,
+        choice1Per: post.choice1Per,
+        choice2Per: post.choice2Per,
+        userImage: post.User.userImg,
+        nickname: post.User.nickname,
+        createdAt: post.createdAt,
+        endTime: post.endTime,
+        choiceCount: post.choiceCount,
+        isBookMark: boolean,
+        userKey: post.userKey,
+      };
+    });
+
     const getAdvice = await this.adviceRepository.adviceHot(userKey);
 
-    return { choice: getChoice, advice: getAdvice };
+    const adviceData = getAdvice.map((post) => {
+      return {
+        adviceId: post.adviceId,
+        title: post.title,
+        content: post.content,
+        createdAt: post.createdAt,
+        viewCount: post.viewCount,
+        CommentCount: post.Comments.length,
+        userKey: post.userKey,
+      };
+    });
+
+    return { choice: choiceData, advice: adviceData };
   };
 }
 
