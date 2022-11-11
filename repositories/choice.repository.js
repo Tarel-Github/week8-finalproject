@@ -20,20 +20,23 @@ class ChoiceRepository {
     return findAllchoice ;
   };
 
+
   findOneData = async (i) => {
     const findOnechoice = await Choice.findAll();
     return findOnechoice[i] ;
   };
 
   findUserData = async (userKey) => {
-    const data = await User.findByPk(userKey)
-    const returnData ={
+    const data = await User.findByPk(userKey);
+    const returnData = {
       userKey: data.userKey,
       userImg: data.userImg,
+
       nickname: data.nickname
-    }
+    };
     return returnData
-  }
+  };
+
 
   findMychoice = async (userKey) => {
     const findMychoice = await Choice.findAll({
@@ -142,7 +145,6 @@ class ChoiceRepository {
   };
 
   //투표를 완료한 경우, 해당 choice테이블에서 투표 데이터를 가져온다.
-  //choice1Per의 값은 자신의 choiceId를 가진 투표 파일 중 choiceNum이 1인 것의 수
   resultChoice = async (choiceId) => {
     const result = await Choice.findOne({
       where: {
@@ -170,6 +172,21 @@ class ChoiceRepository {
       ],
     });
     return choiceHot5;
+  };
+
+  choiceSeach = async (userKey, keyword) => {
+    const seachResult = await Choice.findAll({
+      where: {
+        title: {
+          [Op.like]: "%" + keyword + "%",
+        },
+      },
+      include: [
+        { model: User, attributes: ["nickname", "userImg"] },
+        { model: ChoiceBM, where: { userKey: userKey }, required: false },
+      ],
+    });
+    return seachResult;
   };
 }
 
