@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
 const LoginMiddleware = require("../middlewares/LoginMiddleware");
+const upload = require("../modules/user.multer");
 const UserController = require("../controllers/user.controller");
 const userController = new UserController();
 
@@ -21,7 +22,12 @@ router.post("/login", LoginMiddleware, userController.login);
 router.post("/test", authMiddleware);
 
 // 프로필 이미지 수정
-router.put("/mypage", authMiddleware, userController.profileUpdate);
+router.put(
+  "/mypage",
+  authMiddleware,
+  upload.array("image", 1),
+  userController.profileUpdate
+);
 
 //마이페이지
 router.get("/mypage", authMiddleware, userController.mypage);
@@ -29,5 +35,10 @@ router.get("/mypage", authMiddleware, userController.mypage);
 //검색
 router.get("/search", authMiddleware, userController.search);
 
+//리워드
+// router.get("/mypage/reword", authMiddleware, userController.reword);
+
+// 프로필 이미지 업로드
+//router.put("/mypage", authMiddleware, userController.profileUpdate);
 
 module.exports = router;

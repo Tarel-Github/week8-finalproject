@@ -1,4 +1,4 @@
-const { User, isChoice } = require("../models");
+const { User, isChoice, Comment } = require("../models");
 
 class UserRepository {
   createUser = async ({
@@ -20,7 +20,7 @@ class UserRepository {
   findUser = async (userKey) => {
     return await User.findOne({
       where: { userKey: userKey },
-      include: { model: isChoice },
+      include: [{ model: isChoice }, { model: Comment }],
     });
   };
 
@@ -45,6 +45,14 @@ class UserRepository {
     return await isChoice.findAll({ where: { userKey: userKey } });
   };
 
+
+  updateUserNickname = async (userKey, nickname) => {
+    const updateAdviceContentData = await User.update(
+      {nickname:nickname},
+      {where: {userKey: userKey}}
+    );
+    return updateAdviceContentData;
+  }
 
 
 }
