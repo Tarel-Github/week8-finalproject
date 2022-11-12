@@ -2,7 +2,7 @@ const UserService = require("../services/users.service");
 const joi = require("../util/joi");
 const bcrypt = require("bcrypt");
 const ErrorCustom = require("../exceptions/error-custom");
-const Post = require("../schemas/misson");
+const Post = require("../schemas/mission");
 require("dotenv").config();
 const aws = require("aws-sdk");
 const redisCli = require("../util/redis");
@@ -13,7 +13,7 @@ class UserController {
   /**회원가입 컨트롤러 */
   signup = async (req, res, next) => {
     try {
-      const { userId, nickname, password, confirm, isAdult } =
+      const { userId, nickname, password, confirm, IsAdult } =
         await joi.signupSchema.validateAsync(req.body);
 
       const hashed = await bcrypt.hash(password, 12);
@@ -22,7 +22,7 @@ class UserController {
         userId: userId,
         nickname: nickname,
         password: hashed,
-        isAdult: isAdult,
+        IsAdult: IsAdult,
       });
       res.status(200).json({ message: "회원가입 성공" });
     } catch (error) {
@@ -88,7 +88,7 @@ class UserController {
       const { userKey } = res.locals.user;
       const mainpage = await this.userService.mainPage(userKey);
 
-      return res.status(200).json({ data: mainpage });
+      return res.status(200).json({ mainData: mainpage });
     } catch (error) {
       next(error);
     }
@@ -123,9 +123,9 @@ class UserController {
   reword = async (req, res, next) => {
     try {
       const { userKey } = res.locals.user;
-      const misson = await this.userService.reword(userKey);
+      const mission = await this.userService.reword(userKey);
 
-      return res.status(200).json(misson);
+      return res.status(200).json(mission);
     } catch (error) {
       next(error);
     }
@@ -135,12 +135,9 @@ class UserController {
   profileUpdate = async (req, res, next) => {
     const { userKey } = res.locals.user;
     const image = req.files;
-    const { nickname } = req.body;  
-    //console.log(nickname, "아이디");
-    //const { userKey } = req.params;
-    //console.log(userKey, "유저고유")
+    const { nickname } = req.body;
     const findUser = await this.userService.mypage(userKey);
-    //console.log(findUser.userKey, "뭐가 담겨있나")
+
     if (userKey !== findUser.userKey) {
       return res.status(400).json({ errorMessage: "권한이 없습니다." });
     }
