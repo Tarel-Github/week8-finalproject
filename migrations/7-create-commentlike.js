@@ -20,11 +20,11 @@ module.exports = {
       commentId: {
         allowNull: false,
         type: Sequelize.INTEGER,
-        onDelete:"cascade",
         references: {
             model: "Comments",
             key: "commentId",
         },
+        onDelete: 'cascade',
       },
       // choiceId: {
       //   allowNull: false,

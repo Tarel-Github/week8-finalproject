@@ -32,7 +32,6 @@ module.exports = (sequelize, DataTypes) => {
           model: "Choice",
           key: "choiceId",
         },
-        onDelete:"cascade",
       },
       userKey: {
         type: DataTypes.INTEGER,

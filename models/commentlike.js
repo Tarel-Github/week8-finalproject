@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
           model: "Comment",
           key: "commentId",
         },
-        onDelete:"cascade",
+        onDelete: 'cascade',
       },
       // choiceId: {
       //   allowNull: false,

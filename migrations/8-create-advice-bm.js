@@ -11,11 +11,11 @@ module.exports = {
       },
       adviceId: {
         type: Sequelize.INTEGER,
-        onDelete:"cascade",
         references: {
           model: "Advice",
           key: "adviceId",
         },
+        onDelete: 'cascade',
       },
       userKey: {
         type: Sequelize.INTEGER,

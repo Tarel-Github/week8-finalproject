@@ -20,11 +20,11 @@ module.exports = {
       adviceId: {
         allowNull: false,
         type: Sequelize.INTEGER,
-        onDelete:"cascade",
         references: {
           model: "Advice",
           key: "adviceId",
         },
+        onDelete: 'cascade',
       },
       comment: {
         type: Sequelize.STRING,
