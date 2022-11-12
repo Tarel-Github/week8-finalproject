@@ -11,6 +11,7 @@ module.exports = {
       },
       choiceId: {
         type: Sequelize.INTEGER,
+        onDelete:"cascade",
         references: {
           model: "Choices",
           key: "choiceId",
