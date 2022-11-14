@@ -39,13 +39,23 @@ class BookMarkService {
     const findBmChoice = await this.bookmarkRepository.findBmChoice(userKey);
 
     const result = findBmChoice.map((post) => {
+      let isChoice;
+      post.Choice.isChoices.length ? (isChoice = true) : (isChoice = false);
+      let absolute_a = post.Choice.choice1Per;
+      let absolute_b = post.Choice.choice2Per;
+      let choice1Per;
+      let choice2Per;
+      if (absolute_a + absolute_b > 0) {
+        choice1Per = Math.round((absolute_a / (absolute_a + absolute_b)) * 100);
+        choice2Per = 100 - choice1Per;
+      }
       return {
         choiceId: post.Choice.choiceId,
         title: post.Choice.title,
         choice1Name: post.Choice.choice1Name,
         choice2Name: post.Choice.choice2Name,
-        choice1Per: post.Choice.choice1Per,
-        choice2Per: post.Choice.choice2Per,
+        choice1Per: choice1Per,
+        choice2Per: choice2Per,
         userImage: post.Choice.User.userImage,
         nickname: post.Choice.User.nickname,
         createdAt: post.Choice.createdAt,
@@ -53,7 +63,7 @@ class BookMarkService {
         choiceCount: post.Choice.choiceCount,
         userKey: post.Choice.userKey,
         isBookmark: true,
-        isChoice: null,
+        isChoice: isChoice,
       };
     });
 

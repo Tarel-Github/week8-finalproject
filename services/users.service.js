@@ -75,20 +75,31 @@ class UserService {
 
     const choiceData = getChoice.map((post) => {
       let boolean;
+      let isChoice;
+      let absolute_a = post.choice1Per;
+      let absolute_b = post.choice2Per;
+      let choice1Per;
+      let choice2Per;
+      if (absolute_a + absolute_b > 0) {
+        choice1Per = Math.round((absolute_a / (absolute_a + absolute_b)) * 100);
+        choice2Per = 100 - choice1Per;
+      }
+      post.isChoices.length ? (isChoice = true) : (isChoice = false);
       post.ChoiceBMs.length ? (boolean = true) : (boolean = false);
       return {
         choiceId: post.choiceId,
         title: post.title,
         choice1Name: post.choice1Name,
         choice2Name: post.choice2Name,
-        choice1Per: post.choice1Per,
-        choice2Per: post.choice2Per,
+        choice1Per: choice1Per,
+        choice2Per: choice2Per,
         userImage: post.User.userImg,
         nickname: post.User.nickname,
         createdAt: post.createdAt,
         endTime: post.endTime,
         choiceCount: post.choiceCount,
         isBookMark: boolean,
+        isChoice: isChoice,
         userKey: post.userKey,
       };
     });
@@ -102,7 +113,7 @@ class UserService {
         content: post.content,
         createdAt: post.createdAt,
         viewCount: post.viewCount,
-        CommentCount: post.Comments.length,
+        commentCount: post.Comments.length,
         userKey: post.userKey,
       };
     });
@@ -112,12 +123,18 @@ class UserService {
 
   //마이페이지 데이터 가져오기
   mypage = async (userKey) => {
+    if (userKey == 0) {
+      return {
+        userKey: userKey,
+        nickname: "로그인이 필요합니다.",
+        userImage:
+          "https://imgfiles-cdn.plaync.com/file/LoveBeat/download/20200204052053-LbBHjntyUkg2jL3XC3JN0-v4",
+        totalAdvice: 0,
+        totalChoice: 0,
+      };
+    }
     const user = await this.userRepository.findUser(userKey);
-    //console.log(user, "무엇인가?")
 
-    // if (user.Comments.length >= mission.adviceCount) {
-    //   await this.missionComplete.create(userKey, missioni);
-    // }
     const result = {
       userKey: userKey,
       nickname: user.nickname,
@@ -125,7 +142,7 @@ class UserService {
       totalAdvice: user.Comments.length,
       totalChoice: user.isChoices.length,
     };
-    //console.log(result, "어떤게 들어있나")
+
     return result;
   };
 
@@ -162,7 +179,7 @@ class UserService {
         content: post.content,
         createdAt: post.createdAt,
         viewCount: post.viewCount,
-        CommentCount: post.Comments.length,
+        commentCount: post.Comments.length,
         userKey: post.userKey,
       };
     });
@@ -188,40 +205,57 @@ class UserService {
   };
 
   reword = async (userKey) => {
-    //휙득한 좋아요수
+    /**유저의 활동 정보를 모두 가져옴 */
     const totalReword = await this.userRepository.totalReword(userKey);
-    //내가 받은 총 좋아요수
+
     const likeArray = totalReword[0].Comments.map((x) => x.CommentLikes.length);
+    /**내가 받은 총 좋아요수 */
     let likeTotal = 0;
     likeArray.forEach((x) => {
       likeTotal += x;
     });
-    //내 게시글의 총 조회수
+
     const viewCountArray = totalReword[0].Advice.map((x) => x.viewCount);
+
+    /**내 게시글의 총 조회수 */
     let viewCount = 0;
+
     viewCountArray.forEach((x) => {
       viewCount += x;
     });
-    //내가 조언해준 횟수
+
+    /** 내가 조언해준 횟수*/
     const totalAdvice = totalReword[0].Comments.length;
-    //내가 투표한횟수
+
+    /**내가 투표한횟수 */
     const totalChoice = totalReword[0].isChoices.length;
-    //
+
+    /**내가 쓴 조언게시글 수 */
     const totalPost = totalReword[0].Advice.length;
 
     console.log(
       `totalAdvice:${totalAdvice}, totalChoice:${totalChoice}, totalPost:${totalPost},viewCount:${viewCount},likeTotal:${likeTotal}`
     );
+    /**모든 미션Id */
     const missionarray = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+    /**완료한 미션 */
     const completedMission = await this.missionRepository.completeMission(
       userKey
     );
+
+    /**완료한 미션 ID */
     const CompleteMission = completedMission.map((x) => x.missionId);
+
+    /**미완료 미션ID */
     const unCompleteMission = missionarray.filter(
       (x) => !CompleteMission.includes(x)
     );
+
     console.log(unCompleteMission);
     console.log(CompleteMission);
+
+    /**미완료 미션을 가져와 기준에 충족하면 */
     const mission = await this.missionRepository.mission(unCompleteMission);
     const newCompleteMissionId = [];
     mission.forEach((x) => {

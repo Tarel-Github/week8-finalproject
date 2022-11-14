@@ -18,7 +18,7 @@ class AdviceRepository {
   adviceHot = async () => {
     const adviceHot5 = await Advice.findAll({
       order: [["viewCount", "DESC"]],
-      limit: 5,
+      limit: 3,
       include: [{ model: Comment }],
     });
     return adviceHot5;
@@ -112,8 +112,15 @@ class AdviceRepository {
 
   //조언 게시물 삭제
   adviceDelete = async (adviceId) => {
-    const adviceDelete = await Advice.destroy({ where: {adviceId: adviceId}})
-    return adviceDelete
+    const adviceDelete = await Advice.destroy({
+      where: { adviceId: adviceId },
+    });
+    return adviceDelete;
+  };
+
+  //내가 쓴 조언글 조회
+  myadvice = async (userKey) => {
+    return await Advice.findAll({where:{userKey:userKey}})
   }
 }
 
