@@ -18,7 +18,9 @@ class ChoiceRepository {
   };
 
   findAllchoice = async () => {
-    const findAllchoice = await Choice.findAll();
+    const findAllchoice = await Choice.findAll({
+      order: [["createdAt", "DESC"]],
+    });
     return findAllchoice;
   };
 
@@ -161,7 +163,7 @@ class ChoiceRepository {
   choiceHot = async (userKey) => {
     const choiceHot5 = await Choice.findAll({
       order: [["choiceCount", "DESC"]],
-      limit: 3,
+      // limit: 3,
       include: [
         { model: User, attributes: ["nickname", "userImg"] },
         { model: ChoiceBM, where: { userKey: userKey }, required: false },

@@ -7,7 +7,7 @@ class ChoiceController {
     try {
       const { userKey } = res.locals.user;
       if (userKey == 0) {
-        res.status(400).send({ message: "로그인이 필요합니다." });
+        return res.status(400).send({ message: "로그인이 필요합니다." });
       }
       const { title, choice1Name, choice2Name, endTime } = req.body;
 
@@ -30,21 +30,39 @@ class ChoiceController {
     }
   };
 
+  //모든 게시글 조회(1~10)
   allchoice = async (req, res, next) => {
     try {
       const { userKey } = res.locals.user;
+      const { page } = req.query;
       const allchoice = await this.choiceService.findAllchoice(userKey);
-      res.status(200).json({ data: allchoice });
+
+      const low = page * 10;
+      const high = low + 9;
+
+      let choice = new Array();
+      let a = 0;
+      for (let i = low; i <= high; i++) {
+        if (allchoice[i] == null) {
+          break;
+        }
+        end[a] = allchoice[i];
+        a++;
+      }
+      a = 0;
+
+      res.status(200).json({ choice });
     } catch (err) {
       next(err);
     }
   };
 
+  //마이페이지 게시글 조회
   mychoice = async (req, res, next) => {
     try {
       const { userKey } = res.locals.user;
       if (userKey == 0) {
-        res.status(400).send({ message: "로그인이 필요합니다." });
+        return res.status(400).send({ message: "로그인이 필요합니다." });
       }
       const mychoice = await this.choiceService.findMychoice(userKey);
       res.status(200).json({ data: mychoice });
@@ -58,7 +76,9 @@ class ChoiceController {
       const { userKey } = res.locals.user;
       const { choiceId } = req.params;
       if (!choiceId) throw new Error("없는 게시글 입니다.");
-
+      if (userKey == 0) {
+        return res.status(400).send({ message: "권한이 없습니다." });
+      }
       const deletechoice = await this.choiceService.deletechoice(
         userKey,
         choiceId
@@ -80,7 +100,7 @@ class ChoiceController {
     try {
       const { userKey } = res.locals.user;
       if (userKey == 0) {
-        res.status(400).send({ message: "로그인이 필요합니다." });
+        return res.status(400).send({ message: "로그인이 필요합니다." });
       }
       const { choiceId } = req.params;
       const { choiceNum } = req.body;
@@ -98,7 +118,6 @@ class ChoiceController {
           .json({ message: choiceNum + "번에 투표 성공", data: choice });
       } else {
         res.status(200).json({ message: "투표 취소", data: choice });
-
       }
       return choice;
     } catch (err) {

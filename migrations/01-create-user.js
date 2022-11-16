@@ -20,7 +20,7 @@ module.exports = {
         unique: true,
       },
       password: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.STRING,
       },
       isAdult: {
@@ -29,6 +29,14 @@ module.exports = {
       },
       userImg: {
         type: Sequelize.STRING,
+        allowNull: true,
+      },
+      level: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+      grade: {
+        type: Sequelize.INTEGER,
         allowNull: true,
       },
       createdAt: {

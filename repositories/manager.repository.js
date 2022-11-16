@@ -4,8 +4,8 @@ const { Op } = require("sequelize");
 class CommentRepository {
   Comment = new Comment();
 
-  //덧글 추가
-  createComment = async (userKey, adviceId, comment) => {
+  //관리자 페이지 가져오기
+  getManager = async (userKey, adviceId, comment) => {
     const createCommentData = await Comment.create({
       userKey,
       adviceId,
@@ -14,14 +14,11 @@ class CommentRepository {
     return createCommentData;
   };
 
-  //덧글 수정
-  updateComment = async (userKey, commentId, comment) => {
+  //관리자 권한 부여
+  newManager = async (userKey, commentId, comment) => {
     const data = await Comment.findByPk(commentId);
     const dataId = data.userKey;
-    if (userKey !== dataId) {
-      //로그인한 사람의 id와 comment가 가진 userKey가 다를 경우
-      return;
-    }
+
     const updateCommentData = await Comment.update(
       { comment },
       { where: { commentId } }
@@ -29,8 +26,8 @@ class CommentRepository {
     return updateCommentData;
   };
 
-  //덧글 삭제
-  deleteComment = async (commentId, userKey) => {
+  //신고게시글 목록 가져오기
+  allReport = async (commentId, userKey) => {
     console.log(commentId);
     //하위 데이터 전부 삭제
     const data = await CommentLike.destroy({
@@ -45,36 +42,14 @@ class CommentRepository {
     return deleteCommentData;
   };
 
-  //좋아요 이력 확인
-  isCommentLike = async (userKey, commentId) => {
+  //신고게시글 제재 먹이기
+  punishment = async (userKey, commentId) => {
     const data = await CommentLike.findOne({
       where: {
         [Op.and]: [{ userKey }, { commentId }],
       },
     });
     return data;
-  };
-
-  //좋아요 취소
-  cancelCommentLike = async (userKey, commentId) => {
-    const data = await CommentLike.destroy({
-      where: {
-        [Op.and]: [{ userKey }, { commentId }],
-      },
-    });
-  };
-
-  //좋아요 생성
-  createCommentLike = async (userKey, commentId) => {
-    const data = await CommentLike.create({ userKey, commentId });
-    return data;
-  };
-
-  //해당 덧글의 좋아요는 총 몇개인가?
-  countComment = async (commentId) => {
-    const data = await CommentLike.findAll({ where: { commentId } });
-    const data_length = data.length;
-    return data_length;
   };
 }
 

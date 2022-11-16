@@ -11,11 +11,10 @@ class AdviceController {
   creatAdvice = async (req, res, next) => {
     const { userKey } = res.locals.user;
     if (userKey == 0) {
-      res.status(400).send({ message: "로그인이 필요합니다." });
+      return res.status(400).send({ message: "로그인이 필요합니다." });
     }
     const { title, categoryId, content } = req.body;
     const images = req.files;
-
     try {
       const creatAdvice = await this.adviceService.createAdvice(
         userKey,
@@ -49,20 +48,41 @@ class AdviceController {
 
   //조언 게시글조회
   allAdvice = async (req, res, next) => {
-    //const { userKey } = res.locals.user;
     const { categoryId } = req.params;
+    const { page } = req.query;
     const allAdvice = await this.adviceService.findAllAdvice();
     const allCategoryAdvice = await this.adviceService.findCategoryAdvice(
       categoryId
     );
+    console.log(page);
+
+    const totalAdvice = allAdvice.map((x) => x);
+    function chunk(data = [], size = 1) {
+      const arr = [];
+      for (let i = 0; i < data.length; i += size) {
+        arr.push(data.slice(i, i + size));
+      }
+      return arr;
+    }
+    const allAdviceGet = chunk(totalAdvice, 10)[Number(page)];
+
+    const totalCategory = allCategoryAdvice.map((x) => x);
+    function chunk(data = [], size = 1) {
+      const arr = [];
+      for (let i = 0; i < data.length; i += size) {
+        arr.push(data.slice(i, i + size));
+      }
+      return arr;
+    }
+    const allCategoryAdviceGet = chunk(totalCategory, 10)[Number(page)];
 
     try {
       //전체 조회
       if (categoryId == 0) {
-        return res.status(200).json({ data: allAdvice });
+        return res.status(200).json({ allAdviceGet });
       }
       //카테고리별 조회
-      return res.status(200).json({ data: allCategoryAdvice });
+      return res.status(200).json({ allCategoryAdviceGet });
     } catch (err) {
       next(err);
     }
@@ -90,6 +110,9 @@ class AdviceController {
     const { userKey } = res.locals.user;
     const { adviceId } = req.params;
     const { title, content, imageId } = req.body;
+    if (userKey == 0) {
+      return res.status(400).send({ message: "권한이 없습니다." });
+    }
     const images = req.files;
     const findAdvice = await this.adviceService.findAllAdvice(adviceId);
 
@@ -164,6 +187,9 @@ class AdviceController {
   deleteAdvice = async (req, res, next) => {
     const { userKey } = res.locals.user;
     const { adviceId } = req.params;
+    if (userKey == 0) {
+      return res.status(400).send({ message: "권한이 없습니다." });
+    }
     const findAdvice = await this.adviceService.findAllAdvice(adviceId);
 
     if (userKey !== findAdvice[0].userKey) {
@@ -210,20 +236,18 @@ class AdviceController {
   };
 
   /**내가쓴 조언글 가져오기 */
-  myadvice = async(req,res,next)=>{
-    try{
+  myadvice = async (req, res, next) => {
+    try {
       const { userKey } = res.locals.user;
       if (userKey == 0) {
-        res.status(400).send({ message: "로그인이 필요합니다." });
+        return res.status(400).send({ message: "로그인이 필요합니다." });
       }
-      const myadvice = await this.adviceService.myadvice(userKey)
-      return res.status(200).json(myadvice)
-
-    }catch(err){
-      next(err)
+      const myadvice = await this.adviceService.myadvice(userKey);
+      return res.status(200).json(myadvice);
+    } catch (err) {
+      next(err);
     }
-
-  }
+  };
 }
 
 module.exports = AdviceController;

@@ -3,16 +3,6 @@ const CommentService = require("../services/comment.service");
 class CommentController {
   commentService = new CommentService();
 
-  // getComment = async(req, res, next) => {
-  //     try{
-  //     const {adviceId} = req.params;//포스트의 아이디를 가져와야 함
-  //     const comments = await this.commentService.findComment(adviceId);//포스트서비스의 findAllPost를 사용
-  //     res.status(200).json({data:comments});//컨트롤러는 요청과 응답에 관여하니 응답만
-  //     }catch(error){
-  //         return res.status(500).send({ errorMessage:error.message});
-  //     }
-  // }
-
   createComment = async (req, res, next) => {
     try {
       const { adviceId } = req.params;
@@ -20,7 +10,7 @@ class CommentController {
       const { userKey } = res.locals.user;
 
       if (userKey == 0) {
-        res.status(400).send({ message: "로그인이 필요합니다." });
+        return res.status(400).send({ message: "로그인이 필요합니다." });
       }
 
       if (!comment) {
@@ -44,6 +34,10 @@ class CommentController {
       const { comment } = req.body;
       const { userKey } = res.locals.user;
 
+      if (userKey == 0) {
+        return res.status(400).send({ message: "수정권한이 없습니다." });
+      }
+
       const updateComment = await this.commentService.updateComment(
         userKey,
         commentId,
@@ -64,6 +58,10 @@ class CommentController {
     try {
       const { commentId } = req.params;
       const { userKey } = res.locals.user;
+
+      if (userKey == 0) {
+        return res.status(400).send({ message: "삭제권한이 없습니다." });
+      }
       const deleteComment = await this.commentService.deleteComment(
         commentId,
         userKey
@@ -85,7 +83,7 @@ class CommentController {
       const { userKey } = res.locals.user;
 
       if (userKey == 0) {
-        res.status(400).send({ message: "로그인이 필요합니다." });
+        return res.status(400).send({ message: "로그인이 필요합니다." });
       }
 
       const Likes = await this.commentService.updateCommentLike(
