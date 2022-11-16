@@ -60,6 +60,9 @@ class ManagerController {
     try {
       const { targetId } = req.params;
       const { userKey, grade } = res.locals.user;
+      const { isGuilty } = req.body; //0이면 용서, 1이면 제재
+      //isGuilty가 0이면 용서, 1이면 유죄
+      //
 
       if (userKey == 0) {
         return res.status(400).send({ message: "로그인이 필요합니다." });
@@ -67,19 +70,21 @@ class ManagerController {
       if (grade == 0 || grade == null) {
         return res.status(400).send({ message: "당신은 관리자가 아닙니다." });
       }
+      if (isGuilty == 0) {
+        const forgive = await this.managerService.forgive();
 
-      const Likes = await this.managerService.updateManagerLike(
-        userKey,
-        managerId
-      );
-      const count = await this.managerService.countManager(commentId);
+        return res.status(200).json({ Message: "봐줌", data: Likes });
+      } else if (isGuilty == 1) {
+        const education = await this.managerService.education();
 
-      res.status(200).json({ Message: "참교육 성공", data: Likes });
+        res.status(200).json({ Message: "참교육 성공", data: education });
+      }
     } catch (error) {
       next(error);
     }
   };
 
+  //용서
   forgive = async (req, res, next) => {
     try {
       res.status(200).json({ Message: "봐줌", data: Likes });

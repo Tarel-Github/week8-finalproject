@@ -18,7 +18,7 @@ router.put("/manager/appoint", auth, managerController.newManager);
 router.get("/manager/allreport", auth, managerController.allReport);
 
 //신고게시글 제재 먹이기
-router.put("/manager/punishment", auth, managerController.punishment);
+router.put("/manager/punishment/:targetId", auth, managerController.punishment);
 
 //신고게시글 봐주기
 router.put("/manager/forgive", auth, managerController.forgive);

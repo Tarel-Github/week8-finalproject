@@ -15,10 +15,7 @@ class CommentRepository {
   };
 
   //관리자 권한 부여
-  newManager = async (userKey, commentId, comment) => {
-    const data = await Comment.findByPk(commentId);
-    const dataId = data.userKey;
-
+  newManager = async (userKey) => {
     const updateCommentData = await Comment.update(
       { comment },
       { where: { commentId } }
