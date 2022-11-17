@@ -21,6 +21,7 @@ class ManagerController {
     }
   };
 
+  //관리자 권한 부여
   newManager = async (req, res, next) => {
     try {
       const { userKey } = req.body; //권한을 부여할 대상
@@ -49,7 +50,7 @@ class ManagerController {
         return res.status(400).send({ message: "당신은 관리자가 아닙니다." });
       }
       const allReport = await this.managerService.allReport();
-      res.status(200).json({ Message: "모든 신고 모음", data: allReport });
+      res.status(200).json({ Message: "미처리된 신고", data: allReport });
     } catch (error) {
       next(error);
     }
@@ -71,12 +72,10 @@ class ManagerController {
         return res.status(400).send({ message: "당신은 관리자가 아닙니다." });
       }
       if (isGuilty == 0) {
-        const forgive = await this.managerService.forgive();
-
+        const forgive = await this.managerService.forgive(targetId);
         return res.status(200).json({ Message: "봐줌", data: Likes });
       } else if (isGuilty == 1) {
-        const education = await this.managerService.education();
-
+        const education = await this.managerService.education(targetId);
         res.status(200).json({ Message: "참교육 성공", data: education });
       }
     } catch (error) {

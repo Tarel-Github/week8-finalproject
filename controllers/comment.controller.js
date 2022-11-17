@@ -120,9 +120,11 @@ class CommentController {
       let mes;
       if (!updateComment) {
         mes = "뭐하자는 겁니까?"; //본인이 쓴 덧글 본인이 신고한 경우
+      } else {
+        mes = "신고 성공";
       }
 
-      res.status(200).json({ Message: mes });
+      res.status(200).json({ Message: mes, data: updateComment });
     } catch (error) {
       next(error);
     }

@@ -17,6 +17,10 @@ const missionSchema = new Schema({
     type: String,
     required: true,
   },
+  guilty: {
+    type: Boolean,
+    default: false,
+  },
   processing: {
     type: Boolean,
     default: false,
