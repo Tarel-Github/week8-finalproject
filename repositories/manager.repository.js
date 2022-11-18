@@ -1,23 +1,14 @@
-const { Users, Posts, Comment } = require("../models"); //모델 데이터를 가져오고
+const { User } = require("../models"); //모델 데이터를 가져오고
 const { Op } = require("sequelize");
 const Report = require("../schemas/report");
 
-class CommentRepository {
-  Comment = new Comment();
-
-  //관리자 페이지 가져오기
-  getManager = async () => {
-    const getManager = await Comment.create({
-      userKey,
-      adviceId,
-      comment,
-    });
-    return getManager;
-  };
-
+class ManagerRepository {
   //관리자 권한 부여
-  newManager = async (userKey, grade) => {
-    const newManager = await Users.update({ grade }, { where: { userKey } });
+  newManager = async (targetUser, grade) => {
+    const newManager = await User.update(
+      { grade },
+      { where: { userKey: targetUser } }
+    );
     return newManager;
   };
 
@@ -28,18 +19,25 @@ class CommentRepository {
   };
 
   //신고게시글 제재 먹이기
-  punishment = async (userKey, commentId) => {
-    const data = await CommentLike.findOne({
-      where: {
-        [Op.and]: [{ userKey }, { commentId }],
-      },
-    });
+  education = async (reportId) => {
+    const guilty = true;
+    const processing = true;
+    const data = await Report.updateOne(
+      { reportId: Number(reportId) },
+      { $set: { guilty, processing } }
+    );
     return data;
   };
 
-  education = async (targetId) => {};
-
-  forgive = async (targetId) => {};
+  //신고게시글 봐주기
+  forgive = async (reportId) => {
+    const processing = true;
+    const data = await Report.updateOne(
+      { reportId: Number(reportId) },
+      { $set: { processing } }
+    );
+    return data;
+  };
 }
 
-module.exports = CommentRepository;
+module.exports = ManagerRepository;

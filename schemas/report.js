@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const missionSchema = new Schema({
+  reportId: {
+    type: Number,
+    unique: true,
+  },
   reporterId: {
     type: Number,
     required: true,

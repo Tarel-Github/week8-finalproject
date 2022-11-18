@@ -14,16 +14,7 @@ class AdviceRepository {
     return createAdvice;
   };
 
-  // 조언 인기 게시물(메인페이지 용)
-  // adviceHot = async () => {
-  //   const adviceHot5 = await Advice.findAll({
-  //     order: [["viewCount", "DESC"]],
-  //     limit: 3,
-  //     include: [{ model: Comment }],
-  //   });
-  //   return adviceHot5;
-  // };
-
+  // 조언 게시물(메인페이지 용)
   getAdvice = async () => {
     const getAdvice = await Advice.findAll({
       include: [{ model: Comment }],

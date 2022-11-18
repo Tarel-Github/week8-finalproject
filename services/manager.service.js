@@ -3,16 +3,13 @@ const ManagerRepository = require("../repositories/manager.repository"); //리�
 class ManagerService {
   managerRepository = new ManagerRepository();
 
-  //관리자 페이지 가져오기
-  getManager = async () => {
-    const getManager = await this.managerRepository.getManager();
-    return getManager;
-  };
-
   //관리자 권한 부여
-  newManager = async (userKey) => {
+  newManager = async (targetUser) => {
     const grade = 1;
-    const newManager = await this.managerRepository.newManager(userKey, grade);
+    const newManager = await this.managerRepository.newManager(
+      targetUser,
+      grade
+    );
     return newManager;
   };
 
@@ -23,25 +20,16 @@ class ManagerService {
   };
 
   //신고게시글 제재 먹이기
-  education = async () => {
-    const education = await this.managerRepository.education();
+  education = async (reportId) => {
+    const education = await this.managerRepository.education(reportId);
     return education;
   };
 
   //신고게시글 봐주기
-  forgive = async () => {
-    const forgive = await this.managerRepository.forgive();
+  forgive = async (reportId) => {
+    const forgive = await this.managerRepository.forgive(reportId);
     return forgive;
   };
-
-  // //신고게시글 제재 먹이기
-  // punishment = async (managerId, userKey) => {
-  //   const punishment = await this.managerRepository.punishment(
-  //     managerId,
-  //     userKey
-  //   );
-  //   return punishment;
-  // };
 }
 
 module.exports = ManagerService;

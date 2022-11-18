@@ -87,7 +87,10 @@ class CommentRepository {
 
   //덧글 신고하기
   reportComment = async (reporterId, suspectId, targetId, targetName) => {
+    const date = new Date();
+    const reportId = date.valueOf();
     const result = await Report.create({
+      reportId,
       reporterId,
       suspectId,
       targetId,
