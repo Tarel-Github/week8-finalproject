@@ -1,19 +1,24 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const missionSchema = new Schema({
-  reportId: {
+  adviceReportId: {
     type: Number,
     unique: true,
   },
-  ids: {
-    type: Object,
+  reporterId: {
+    type: Number,
     required: true,
   },
-  why: {
-    type: String,
+  suspectId: {
+    type: Number,
+    required: true,
   },
-  content: {
-    type: Object,
+  targetId: {
+    type: Number,
+    required: true,
+  },
+  targetName: {
+    type: String,
     required: true,
   },
   guilty: {
@@ -24,14 +29,6 @@ const missionSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  createdAt: {
-    type: Date,
-    required: true,
-  },
-  updatedAt: {
-    type: Date,
-    required: true,
-  },
 });
 
-module.exports = mongoose.model(`report`, missionSchema);
+module.exports = mongoose.model(`adviceReport`, missionSchema);

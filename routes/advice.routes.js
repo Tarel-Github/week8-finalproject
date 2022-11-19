@@ -37,6 +37,9 @@ adviceRouter.put(
 );
 
 
+// 조언 게시글 신고
+adviceRouter.put("/report/:adviceId", authMiddleware, adviceController.reportAdvice)
+
 
 
 module.exports = adviceRouter;

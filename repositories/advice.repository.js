@@ -1,5 +1,13 @@
-const { Advice, AdviceBM, User, AdviceImage, Comment } = require("../models");
+const {
+  Advice,
+  AdviceBM,
+  User,
+  AdviceImage,
+  Comment,
+  CommentLike,
+} = require("../models");
 const { Op } = require("sequelize");
+const AdviceReport = require("../schemas/adviceReport");
 
 class AdviceRepository {
   //조언 게시글 업로드
@@ -67,7 +75,10 @@ class AdviceRepository {
         { model: User, attributes: ["userKey", "nickname", "userImg"] },
         { model: AdviceBM, where: { userKey: userKey }, required: false },
         { model: AdviceImage, attributes: ["adviceImageId", "adviceImage"] },
-        { model: Comment },
+        {
+          model: Comment,
+          include: [{ model: CommentLike }, { model: User }],
+        },
       ],
     });
     return AdviceOne;
@@ -121,6 +132,16 @@ class AdviceRepository {
   myadvice = async (userKey) => {
     return await Advice.findAll({ where: { userKey: userKey } });
   };
+
+  // 조언 게시글 신고하기
+  reportAdvice = async (reporterId, suspectId, targetId, targetName) => {
+    const date = new Date();
+    const adviceReportId = date.valueOf();
+    const reportAdvice = await AdviceReport.create({
+      adviceReportId, reporterId, suspectId, targetId, targetName
+    });
+    return reportAdvice;
+  }
 }
 
 module.exports = AdviceRepository;

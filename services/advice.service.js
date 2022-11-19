@@ -68,6 +68,24 @@ class AdviceService {
       return [post.dataValues.adviceImageId, post.adviceImage];
     });
 
+    const comment = findOneAdvice.Comments.map((comment) => {
+      const isLike = comment.CommentLikes.filter(
+        (like) => like.userKey === userKey
+      );
+      let boolean;
+      isLike.length ? (boolean = true) : (boolean = false);
+      return {
+        commentId: comment.commentId,
+        userKey: comment.userKey,
+        nickname: comment.User.nickname,
+        userImg: comment.User.userImg,
+        comment: comment.comment,
+        likeCount: comment.CommentLikes.length,
+        createdAt: comment.createdAt,
+        isLike: boolean,
+      };
+    });
+
     let boolean;
     findOneAdvice.AdviceBMs.length ? (boolean = true) : (boolean = false);
     return {
@@ -81,8 +99,10 @@ class AdviceService {
       userImage: findOneAdvice.User.userImg,
       nickname: findOneAdvice.User.nickname,
       adviceImage: findAdviceImageArray,
+      viewCount: findOneAdvice.viewCount,
       isBookMark: boolean,
-      commentcount: findOneAdvice.Comments.length,
+      commentCount: findOneAdvice.Comments.length,
+      comment: comment,
     };
   };
 
@@ -123,8 +143,8 @@ class AdviceService {
   };
 
   //내가쓴 조언게시물 조회
-  myadvice = async (userKey) =>{
-    const myadvice = await this.adviceRepository.myadvice(userKey)
+  myadvice = async (userKey) => {
+    const myadvice = await this.adviceRepository.myadvice(userKey);
 
     return myadvice.map((post) => {
       return {
@@ -139,8 +159,26 @@ class AdviceService {
         viewCount: post.viewCount,
       };
     });
-    
-  }
+  };
+  reportAdvice = async (userKey, adviceId) => {
+    //작성자 확인
+    let type = "advice"
+    const writer = await this.adviceRepository.findAdvice(adviceId)
+    const writerHost = writer.userKey
+    console.log(writerHost)
+
+    if (userKey === writerHost) {
+      return;
+    }
+    const reportAdvice = await this.adviceRepository.reportAdvice(
+      userKey,
+      adviceId,
+      writerHost,
+      type
+    );
+    return reportAdvice;
+  };
+
 }
 
 module.exports = AdviceService;
