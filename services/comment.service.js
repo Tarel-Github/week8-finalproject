@@ -76,6 +76,7 @@ class CommentService {
       type
     );
 
+    console.log("================================");
     console.log(redup);
 
     const report = await this.commentRepository.reportComment(
