@@ -8,6 +8,7 @@ module.exports = {
     host: process.env.DB_END_POINT,
     port: process.env.DB_PORT,
     dialect: "mysql",
+    timezone: "Asia/Seoul",
   },
   test: {
     username: "root",
@@ -23,5 +24,6 @@ module.exports = {
     host: process.env.DB_END_POINT,
     port: process.env.DB_PORT,
     dialect: "mysql",
+    timezone: "Asia/Seoul",
   },
 };

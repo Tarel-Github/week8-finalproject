@@ -1,75 +1,93 @@
 const ChoiceRepository = require("../repositories/choice.repository");
+const schedule = require("node-schedule");
+const { DataExchange } = require("aws-sdk");
+const dayjs = require("dayjs");
+const timezone = require("dayjs/plugin/timezone");
+const utc = require("dayjs/plugin/utc");
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault("Asia/Seoul");
 
 class ChoiceService {
   choiceRepository = new ChoiceRepository();
 
   createchoice = async (userKey, title, choice1Name, choice2Name, endTime) => {
+    const date = dayjs(endTime).format("YYYY.MM.DD HH:mm");
+    console.log("dayjs로 변환", date);
     const createchoice = await this.choiceRepository.createchoice(
       userKey,
       title,
       choice1Name,
       choice2Name,
-      endTime
+      date
     );
+    const rule = new schedule.RecurrenceRule();
+    rule.date = date;
+    rule.tz = "Asia/Seoul";
+    schedule.scheduleJob(rule, async () => {
+      console.log("마감 스케쥴 실행됨");
+      await this.choiceRepository.updateEnd(createchoice.choiceId);
+    });
+
     return createchoice;
   };
 
-  findAllchoice = async (Key) => {
+  findAllchoice = async (userKey, sort) => {
     try {
-      const findAllChoice = await this.choiceRepository.findAllchoice();
-      //바로 위에서, 모든 choice데이터를 최신순으로 가져왔다.
-      //이제 이 밑으로 해줘야 할 일은 다음과 같다.
+      const findAllChoice = await this.choiceRepository.findAllchoice(userKey);
+      //데이터를 최신순으로 로드하여 choiceper값을 변환하고 count값을 추가하고
+      //북마크, 투표여부를 표시하고, 작성장의 프로필 사진을 가져온다.
+      //이 데이터들은 최신순, 참여순, 마감순에 따라 정렬이 가능하다.
 
-      //choiceper 값들을 횟수에서 비율로 바꾼다.
-      //choiceCount 값을 추가한다.
-      //로그인 한 사람은 그 게시글에 북마크를 했는지 표시한다.
-      //로그인 한 사람은 그 게시글에 투표를 했는지 표시한다.
-      //해당 choice의 작성자의 프로필 사진을 가져온다.
-
-      const author = findAllChoice;
-      let data = new Array();
-
-      for (let i = 0; i < findAllChoice.length; i++) {
-        const allData = findAllChoice[i];
-        const authorKey = findAllChoice[i].userKey;
-
-        const findAuthorData = await this.choiceRepository.findUserData(
-          authorKey
-        );
-        const choiceIdforRepo = findAllChoice[i].choiceId;
-        const isChoice = await this.choiceRepository.isChoiceForAll(
-          Key,
-          choiceIdforRepo
-        );
-        const isBookMark = await this.choiceRepository.isBookMark(
-          Key,
-          choiceIdforRepo
-        );
-
-        const a = findAllChoice[i].choice1Per;
-        const b = findAllChoice[i].choice2Per;
+      const allChoice = findAllChoice.map((choice) => {
+        let isBookMark;
+        let isChoice;
+        choice.ChoiceBMs.length ? (isBookMark = true) : (isBookMark = false);
+        choice.isChoices.length ? (isChoice = true) : (isChoice = false);
+        const a = choice.choice1Per;
+        const b = choice.choice2Per;
         const sum = a + b;
         const res_a = (a / sum) * 100;
-        const res_b = (b / sum) * 100;
-
-        data[i] = {
-          choiceId: allData.choiceId,
-          userKey: allData.userKey,
-          title: allData.title,
-          choice1Name: allData.choice1Name,
-          choice2Name: allData.choice2Name,
+        const createdAt = dayjs(choice.createdAt)
+          .tz()
+          .format("YYYY.MM.DD HH:mm");
+        const endTime = dayjs(choice.endTime).format("YYYY.MM.DD HH:mm");
+        console.log(dayjs(endTime).valueOf());
+        return {
+          choiceId: choice.choiceId,
+          userKey: choice.userKey,
+          title: choice.title,
+          choice1Name: choice.choice1Name,
+          choice2Name: choice.choice2Name,
           choice1Per: Math.round(res_a),
           choice2Per: 100 - Math.round(res_a),
-          userImage: findAuthorData.userImg, //
-          nickname: findAuthorData.nickname, //
-          createdAt: allData.createdAt,
-          endTime: allData.endTime,
-          choiceCount: sum,
-          isBookMark: Boolean(isBookMark), //
-          isChoice: Boolean(isChoice), //
+          userImage: choice.User.userImg,
+          nickname: choice.User.nickname,
+          createdAt: createdAt,
+          endTime: endTime,
+          choiceCount: choice.choiceCount,
+          isBookMark: isBookMark,
+          isChoice: isChoice,
+          isEnd: choice.isEnd,
         };
+      });
+
+      if (sort === "1") {
+        const parti = allChoice.sort((a, b) => b.choiceCount - a.choiceCount);
+        return parti;
+      } else if (sort === "2") {
+        //마감순
+        const deadline = allChoice.sort((a, b) => {
+          const endTimeA = dayjs(a.endTime).valueOf();
+          const endTimeB = dayjs(b.endTime).valueOf();
+          return endTimeA - endTimeB;
+        });
+        const deadline_1 = deadline.sort((a, b) => a.isEnd - b.isEnd);
+
+        return deadline_1;
       }
-      return data;
+
+      return allChoice;
     } catch (error) {
       console.log(error);
     }
@@ -95,8 +113,9 @@ class ChoiceService {
         let absolute_b = findMychoice[i].choice2Per;
         let sum = absolute_a + absolute_b;
         let result_a = (absolute_a / sum) * 100;
-        let result_b = (absolute_b / sum) * 100;
-
+        const date = dayjs(findMychoice[i].createdAt)
+          .tz()
+          .format("YYYY.MM.DD HH:mm");
         data[i] = {
           choiceId: findMychoice[i].choiceId,
           userKey: findMychoice[i].userKey,
@@ -107,7 +126,7 @@ class ChoiceService {
           choice2Per: 100 - Math.round(result_a),
           userImage: myData.userImg,
           nickname: myData.nickname,
-          createdAt: findMychoice[i].createdAt,
+          createdAt: date,
           endTime: findMychoice[i].endTime,
           choiceCount: findMychoice[i].choiceCount,
           isBookMark: Boolean(isBookMark),
@@ -120,11 +139,8 @@ class ChoiceService {
     }
   };
 
-  deletechoice = async (userKey, choiceId) => {
-    const deletechoice = await this.choiceRepository.deletechoice(
-      userKey,
-      choiceId
-    );
+  deletechoice = async (choiceId) => {
+    const deletechoice = await this.choiceRepository.deletechoice(choiceId);
     return deletechoice;
   };
 
@@ -161,6 +177,11 @@ class ChoiceService {
         count,
       };
     }
+  };
+
+  early = async (choiceId, userKey) => {
+    const early = await this.choiceRepository.early(choiceId, userKey);
+    return early;
   };
 }
 

@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const ErrorCustom = require("../exceptions/error-custom");
 
 require("dotenv").config();
+
 const aws = require("aws-sdk");
 
 const redisCli = require("../util/redis");
@@ -38,10 +39,8 @@ class UserController {
       const { userId, password } = req.body;
       console.log(userId, password);
 
-      const { accessToken, refreshToken } = await this.userService.verifyUser(
-        userId,
-        password
-      );
+      const { accessToken, refreshToken, nickname } =
+        await this.userService.verifyUser(userId, password);
 
       //refreshtoken을 userId키로 redis에 저장
       await redisCli.set(userId, refreshToken);
@@ -51,7 +50,7 @@ class UserController {
 
       return res
         .status(200)
-        .json({ accessToken, refreshToken, message: "로그인 성공." });
+        .json({ accessToken, refreshToken, message: "로그인 성공.", nickname });
     } catch (error) {
       next(error);
     }
@@ -90,6 +89,20 @@ class UserController {
       const mainpage = await this.userService.mainPage(userKey);
 
       return res.status(200).json(mainpage);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  dailyMessage = async (req, res, next) => {
+    try {
+      const { userKey } = res.locals.user;
+      if (userKey == 0) {
+        return res.status(401).json({ message: "로그인이 필요한 기능입니다." });
+      }
+      const getDailyMessage = await this.userService.getDailymessage(userKey);
+
+      return res.status(200).json({ dailyMessage: getDailyMessage });
     } catch (error) {
       next(error);
     }
@@ -156,43 +169,44 @@ class UserController {
     if (userKey == 0) {
       return res.status(400).send({ message: "로그인이 필요합니다." });
     }
-    const image = req.files;
+    const image = req.file;
     const { nickname } = req.body;
-    const findUser = await this.userService.mypage(userKey);
 
-    if (userKey !== findUser.userKey) {
-      return res.status(400).json({ errorMessage: "권한이 없습니다." });
-    }
+    const findUser = await this.userService.mypage(userKey)
+
     try {
       //이미지 수정
       if (image) {
-        const findUserImage = findUser.userImage;
+        const findUserImage = findUser.userImage.split("/")[4];
         const findUserLastImage = `profileimage/${findUserImage}`;
+        const findUserLastResizeImage = `thumb/${findUserImage}`;
+        const userImageArray = [findUserLastImage, findUserLastResizeImage];
 
-        const s3 = new aws.S3({
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-          region: process.env.AWS_REGION,
-        });
+        for (let i = 0; i < userImageArray.length; i++) {
+          const s3 = new aws.S3({
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.AWS_REGION,
+          });
 
-        const params = {
-          Bucket: process.env.AWS_BUCKET_NAME,
-          Key: findUserLastImage,
-        };
+          const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: userImageArray[i],
+          };
 
-        s3.deleteObject(params, function (err, data) {
-          if (err) {
-            console.log(err, err.stack);
-          } else {
-            res.status(200);
-            next();
-          }
-        });
+          s3.deleteObject(params, function (err, data) {
+            if (err) {
+              console.log(err, err.stack);
+            } else {
+              res.status(200);
+              next();
+            }
+          });
+        }
 
-        const value = Object.values({ image });
-        const imageUrl = value[0][0].transforms[0].location;
-        await this.userService.uploadUserImage(imageUrl, userKey);
-        //console.log(imageUrl);
+        const imageUrl = image.location;
+        const resizeUrl = imageUrl.replace(/\/profileimage\//, "/thumb/");
+        await this.userService.uploadUserImage(imageUrl, resizeUrl, userKey);
       }
 
       if (nickname) {
@@ -202,6 +216,7 @@ class UserController {
       if (!image && !nickname) {
         return res.status(200).json({ msg: "변경할 내용이 없습니다" });
       }
+
       res.status(200).json({ msg: "프로필 수정 완료!" });
     } catch (error) {
       next(error);

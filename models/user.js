@@ -89,6 +89,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      resizeImg: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       level: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -96,6 +100,10 @@ module.exports = (sequelize, DataTypes) => {
       grade: {
         type: DataTypes.INTEGER,
         allowNull: true,
+      },
+      msgOpenCount: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
       },
       createdAt: {
         allowNull: false,

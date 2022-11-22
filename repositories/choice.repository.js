@@ -4,29 +4,39 @@ const { Op } = require("sequelize");
 class ChoiceRepository {
   choice = new Choice();
 
-  createchoice = async (userKey, title, choice1Name, choice2Name, endTime) => {
+  createchoice = async (userKey, title, choice1Name, choice2Name, date) => {
     const createData = await Choice.create({
       userKey,
       title,
       choice1Name,
       choice2Name,
-      endTime,
+      endTime: date,
       choice1Per: 0,
       choice2Per: 0,
+      isEnd: false,
     });
     return createData;
   };
 
-  findAllchoice = async () => {
+  updateEnd = async (choiceId) => {
+    await Choice.update({ isEnd: true }, { where: { choiceId: choiceId } });
+  };
+
+  findAllchoice = async (userKey) => {
     const findAllchoice = await Choice.findAll({
       order: [["createdAt", "DESC"]],
+      include: [
+        { model: User },
+        { model: isChoice, where: { userKey: userKey }, required: false },
+        { model: ChoiceBM, where: { userKey: userKey }, required: false },
+      ],
     });
     return findAllchoice;
   };
 
-  findOneData = async (i) => {
-    const findOnechoice = await Choice.findAll();
-    return findOnechoice[i];
+  findUserChoice = async (userKey) => {
+    const findOnechoice = await Choice.findAll({ where: { userKey: userKey } });
+    return findOnechoice;
   };
 
   findUserData = async (userKey) => {
@@ -34,7 +44,6 @@ class ChoiceRepository {
     const returnData = {
       userKey: data.userKey,
       userImg: data.userImg,
-
       nickname: data.nickname,
     };
     return returnData;
@@ -52,8 +61,8 @@ class ChoiceRepository {
     return data;
   };
 
-  deletechoice = async (userKey, choiceId) => {
-    return await Choice.destroy({ where: { choiceId, userKey } });
+  deletechoice = async (choiceId) => {
+    return await Choice.destroy({ where: { choiceId: choiceId } });
   };
 
   isChoiceForAll = async (userKey, choiceId) => {
@@ -160,19 +169,6 @@ class ChoiceRepository {
     };
   };
 
-  // choiceHot = async (userKey) => {
-  //   const choiceHot5 = await Choice.findAll({
-  //     order: [["choiceCount", "DESC"]],
-  //     // limit: 3,
-  //     include: [
-  //       { model: User, attributes: ["nickname", "userImg"] },
-  //       { model: ChoiceBM, where: { userKey: userKey }, required: false },
-  //       { model: isChoice, where: { userKey: userKey }, required: false },
-  //     ],
-  //   });
-  //   return choiceHot5;
-  // };
-
   choiceSeach = async (userKey, keyword) => {
     const seachResult = await Choice.findAll({
       where: {
@@ -187,6 +183,42 @@ class ChoiceRepository {
       ],
     });
     return seachResult;
+  };
+
+  early = async (choiceId, userKey) => {
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = ("0" + (today.getMonth() + 1)).slice(-2);
+    const day = ("0" + today.getDate()).slice(-2);
+
+    const dateString = year + "-" + month + "-" + day;
+
+    const hours = ("0" + today.getHours()).slice(-2);
+    const minutes = ("0" + today.getMinutes()).slice(-2);
+    const seconds = ("0" + today.getSeconds()).slice(-2);
+
+    const timeString = hours + ":" + minutes + ":" + seconds;
+
+    const deadline = dateString + " " + timeString;
+
+    const findMyChoice = await Choice.findOne({
+      where: { choiceId: choiceId },
+    });
+
+    if (findMyChoice.userKey !== userKey) {
+      return true;
+    }
+
+    if (today > findMyChoice.endTime) {
+      return;
+    }
+
+    const early = await Choice.update(
+      { endTime: deadline },
+      { where: { choiceId: choiceId } }
+    );
+    return early;
   };
 }
 
