@@ -1,7 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class Comment extends Model {
+  class ReportSQLComment extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -9,35 +9,36 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       this.belongsTo(models.User, {
-        foreignKey: "userKey",
+        foreignKey: "reporterId",
+        //as: "reporterIdData",
+        targetKey: "userKey",
+      });
+      this.belongsTo(models.User, {
+        foreignKey: "suspectId",
+        //as: "suspectIdData",
         targetKey: "userKey",
       });
 
-      this.hasMany(models.CommentLike, {
+      this.belongsTo(models.Comment, {
         foreignKey: "commentId",
-        sourceKey: "commentId",
+        targetKey: "commentId",
       });
 
-      this.belongsTo(models.Advice, {
-        foreignKey: "adviceId",
-        targetKey: "adviceId",
-      });
-
-      this.hasMany(models.ReportSQLComment, {
-        foreignKey: "commentId",
-        sourceKey: "commentId",
+      this.hasMany(models.ReportSQL, {
+        foreignKey: "RSId",
+        sourceKey: "RSId",
       });
     }
   }
-  Comment.init(
+  ReportSQLComment.init(
     {
-      commentId: {
+      RSId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: DataTypes.INTEGER,
       },
-      userKey: {
+      reporterId: {
         allowNull: false,
         type: DataTypes.INTEGER,
         references: {
@@ -45,32 +46,28 @@ module.exports = (sequelize, DataTypes) => {
           key: "userKey",
         },
       },
-      adviceId: {
+      suspectId: {
         allowNull: false,
         type: DataTypes.INTEGER,
         references: {
-          model: "Advice",
-          key: "adviceId",
+          model: "User",
+          key: "userKey",
         },
-        onDelete: "cascade",
       },
-      comment: {
-        type: DataTypes.STRING,
+      commentId: {
         allowNull: false,
-      },
-      createdAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: DataTypes.DATE,
+        type: DataTypes.INTEGER,
+        references: {
+          model: "Comment",
+          key: "commentId",
+        },
       },
     },
     {
       sequelize,
-      modelName: "Comment",
+      modelName: "ReportSQLComment",
+      timestamps: false,
     }
   );
-  return Comment;
+  return ReportSQLComment;
 };

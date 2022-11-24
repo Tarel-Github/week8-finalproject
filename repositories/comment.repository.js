@@ -1,4 +1,9 @@
-const { Users, Posts, Comment, CommentLike } = require("../models"); //모델 데이터를 가져오고
+const {
+  Comment,
+  CommentLike,
+  ReportSQL,
+  ReportSQLComment,
+} = require("../models"); //모델 데이터를 가져오고
 const { Op } = require("sequelize");
 const Report = require("../schemas/report");
 
@@ -85,7 +90,7 @@ class CommentRepository {
     return dataId;
   };
 
-  //덧글 신고하기, 신고가 중복되는가?
+  //덧글 신고하기, 신고가 중복되는가?//몽고
   reportRedup = async (reporterId, suspectId, targetId, targetName) => {
     const data = {
       reporterId: Number(reporterId),
@@ -101,7 +106,20 @@ class CommentRepository {
     return result;
   };
 
-  //덧글 신고하기
+  //덧글 신고하기, 신고가 중복되는가?//시퀄
+  reportRedupSQL = async (reporterId, suspectId, targetId, targetName) => {
+    targetId *= 1;
+    const commentId = targetId;
+    const result = await ReportSQLComment.findOne({
+      where: {
+        [Op.and]: [{ reporterId }, { suspectId }, { commentId }],
+      },
+    });
+
+    return result;
+  };
+
+  //덧글 신고하기//몽고
   reportComment = async (reporterId, suspectId, targetId, targetName, why) => {
     const date = new Date();
     const reportId = date.valueOf();
@@ -125,6 +143,39 @@ class CommentRepository {
       },
       createdAt,
       updatedAt,
+    });
+    return result;
+  };
+
+  //덧글 신고하기 (SQL)
+  reportSQL = async (reporterId, suspectId, targetId, targetName, why) => {
+    //const date = new Date();
+    //const reportId = date.valueOf();
+    targetId *= 1;
+    const commentId = targetId;
+    const data = await Comment.findByPk(commentId);
+    const content = data.comment;
+    const guilty = false;
+    const processing = false;
+    //const createdAt = date;
+    //const updatedAt = date;
+    const SQLIds = await ReportSQLComment.create({
+      reporterId,
+      suspectId,
+      commentId,
+    });
+    const SQLdata = await ReportSQLComment.findOne({
+      where: {
+        [Op.and]: [{ reporterId }, { suspectId }, { commentId }],
+      },
+    });
+    const RSId = SQLdata.RSId;
+    const result = await ReportSQL.create({
+      RSId,
+      why,
+      content,
+      guilty,
+      processing,
     });
     return result;
   };

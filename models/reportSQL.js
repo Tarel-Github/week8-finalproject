@@ -1,7 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class Comment extends Model {
+  class ReportSQL extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -9,54 +9,50 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       this.belongsTo(models.User, {
-        foreignKey: "userKey",
+        foreignKey: "reporterId",
+        //as: "reporterIdData",
+        targetKey: "userKey",
+      });
+      this.belongsTo(models.User, {
+        foreignKey: "suspectId",
+        //as: "suspectIdData",
         targetKey: "userKey",
       });
 
-      this.hasMany(models.CommentLike, {
-        foreignKey: "commentId",
-        sourceKey: "commentId",
-      });
-
-      this.belongsTo(models.Advice, {
-        foreignKey: "adviceId",
-        targetKey: "adviceId",
-      });
-
-      this.hasMany(models.ReportSQLComment, {
-        foreignKey: "commentId",
-        sourceKey: "commentId",
+      this.belongsTo(models.ReportSQLComment, {
+        foreignKey: "RSId",
+        targetKey: "RSId",
       });
     }
   }
-  Comment.init(
+  ReportSQL.init(
     {
-      commentId: {
+      reportId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: DataTypes.INTEGER,
       },
-      userKey: {
+      RSId: {
         allowNull: false,
         type: DataTypes.INTEGER,
-        references: {
-          model: "User",
-          key: "userKey",
-        },
       },
-      adviceId: {
-        allowNull: false,
-        type: DataTypes.INTEGER,
-        references: {
-          model: "Advice",
-          key: "adviceId",
-        },
-        onDelete: "cascade",
-      },
-      comment: {
+
+      why: {
+        allowNull: true,
         type: DataTypes.STRING,
+      },
+      content: {
         allowNull: false,
+        type: DataTypes.STRING,
+      },
+      guilty: {
+        allowNull: false,
+        type: DataTypes.BOOLEAN,
+      },
+      processing: {
+        allowNull: false,
+        type: DataTypes.BOOLEAN,
       },
       createdAt: {
         allowNull: false,
@@ -69,8 +65,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Comment",
+      modelName: "ReportSQL",
     }
   );
-  return Comment;
+  return ReportSQL;
 };

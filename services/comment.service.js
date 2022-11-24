@@ -84,13 +84,48 @@ class CommentService {
       type
     );
 
-    if (redup[0]) {
-      const dupmes = false;
-      return dupmes;
-    }
+    // if (redup[0]) {
+    //   const dupmes = false;
+    //   return dupmes;
+    // }
 
     //신고 됌
     const report = await this.commentRepository.reportComment(
+      userKey,
+      author,
+      commentId,
+      type,
+      why
+    );
+
+    return report;
+  };
+
+  //덧글 신고하기 SQL
+  reportCommentSQL = async (userKey, commentId, why) => {
+    //코멘트 아이디를 기반으로 작성자 아이디를 가져오고
+    //신고자 ID, 작성자 ID, 신고게시글유형(덧글인지 뭔지), 신고 대상 ID를 저장
+    let type = "comment";
+    const author = await this.commentRepository.reportCommentAuthor(commentId);
+    if (author === userKey) {
+      return;
+    }
+
+    //중복 확인
+    const redup = await this.commentRepository.reportRedupSQL(
+      userKey,
+      author,
+      commentId,
+      type
+    );
+    // console.log(redup);
+    // if (redup) {
+    //   const dupmes = false;
+    //   return dupmes;
+    // }
+
+    //신고 됌
+    const report = await this.commentRepository.reportSQL(
       userKey,
       author,
       commentId,

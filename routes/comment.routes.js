@@ -21,4 +21,11 @@ router.put(
   commentController.reportComment
 );
 
+//댓글 신고하기SQL
+router.put(
+  "/report/sql/:commentId",
+  authMiddleware,
+  commentController.reportCommentSQL
+);
+
 module.exports = router;

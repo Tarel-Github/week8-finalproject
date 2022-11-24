@@ -2,44 +2,37 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Advice", {
-      adviceId: {
+    await queryInterface.createTable("ReportSQLs", {
+      reportId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      userKey: {
+      RSId: {
         allowNull: false,
         type: Sequelize.INTEGER,
         references: {
-          model: "Users",
-          key: "userKey",
+          model: "ReportSQLComments",
+          key: "RSId",
         },
       },
-      title: {
+
+      why: {
+        allowNull: true,
         type: Sequelize.STRING,
-        allowNull: false,
-      },
-      categoryId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "Categories",
-          key: "categoryId",
-        },
-      },
-      isAdult: {
-        type: Sequelize.BOOLEAN,
-        allowNull: true,
-      },
-      viewCount: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
       },
       content: {
-        type: Sequelize.STRING,
         allowNull: false,
+        type: Sequelize.STRING,
+      },
+      guilty: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
+      },
+      processing: {
+        allowNull: false,
+        type: Sequelize.BOOLEAN,
       },
       createdAt: {
         allowNull: false,
@@ -52,6 +45,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Advice");
+    await queryInterface.dropTable("ReportSQLs");
   },
 };

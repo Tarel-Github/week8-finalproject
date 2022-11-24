@@ -57,6 +57,16 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "tUser",
         sourceKey: "userKey",
       });
+
+      //신고
+      this.hasMany(models.ReportSQL, {
+        foreignKey: "reporterId",
+        sourceKey: "userKey",
+      });
+      this.hasMany(models.ReportSQL, {
+        foreignKey: "suspectId",
+        sourceKey: "userKey",
+      });
     }
   }
   User.init(
