@@ -15,34 +15,21 @@ class AdviceController {
       return res.status(400).send({ message: "로그인이 필요합니다." });
     }
 
-    const { title, categoryId, content, isAdult } = req.body;
+    const { title, categoryId, content } = req.body;
     const images = req.files;
-    console.log(isAdult);
+
     try {
       const creatAdvice = await this.adviceService.createAdvice(
         userKey,
         title,
         categoryId,
-        content,
-        isAdult
+        content
       );
 
       if (images) {
         const adviceId = creatAdvice.adviceId;
         const imageUrl = images.map((url) => url.location);
-        const resizeUrl = [];
-        console.log(imageUrl);
-        for (let i = 0; i < images.length; i++) {
-          resizeUrl.push(
-            images[i].location.replace(/\/adviceimage\//, "/thumb/")
-          );
-        }
-        console.log(resizeUrl);
-        await this.adviceImageService.createAdviceImage(
-          adviceId,
-          imageUrl,
-          resizeUrl
-        );
+        await this.adviceImageService.createAdviceImage(adviceId, imageUrl);
       }
 
       res.status(200).json({
@@ -59,34 +46,14 @@ class AdviceController {
     const { categoryId, filterId } = req.params;
     const { page } = req.query;
 
-    const allAdvice = await this.adviceService.findAllAdvice(filterId);
-    const allCategoryAdvice = await this.adviceService.findCategoryAdvice(
+    const allAdvice = await this.adviceService.findAllAdvice(
       categoryId,
-      filterId
+      filterId,
+      page
     );
 
-    let advice;
-    let arr = [];
-    if (categoryId == 0) {
-      advice = chunk(allAdvice, 10)[Number(page)];
-    } else {
-      advice = chunk(allCategoryAdvice, 10)[Number(page)];
-    }
-
-    function chunk(data = [], size = 1) {
-      arr = [];
-      for (let i = 0; i < data.length; i += size) {
-        arr.push(data.slice(i, i + size));
-      }
-      return arr;
-    }
-
     try {
-      if (!advice) {
-        advice = [];
-      }
-      //카테고리별 조회
-      return res.status(200).json({ advice });
+      return res.status(200).json({ allAdvice });
     } catch (err) {
       next(err);
     }
@@ -103,7 +70,6 @@ class AdviceController {
         adviceId,
         filterId
       );
-      //console.log(findAdvice.comment)
 
       await this.adviceService.upCountView(adviceId, userKey);
       res.status(200).json({ findAdvice });
@@ -122,7 +88,6 @@ class AdviceController {
     }
     const images = req.files;
     const findAdvice = await this.adviceService.findAllAdviceOne(adviceId);
-    //console.log(findAdvice, "만들어")
 
     try {
       if (userKey !== findAdvice.userKey) {
@@ -132,62 +97,27 @@ class AdviceController {
       const findImageAdvice = await this.adviceImageService.adviceImageFind(
         adviceId
       );
-      const AdviceImageArray = [];
-      const AdviceResizeImageArray = [];
 
-      if (findAdvice.adviceImage) {
-        // const findImageAdvice = await this.adviceService.findImages(imageId);
-        const findImageAdvice = findAdvice.adviceImage;
+      if (images) {
         for (let i = 0; i < findImageAdvice.length; i++) {
-          AdviceImageArray.push(
-            "adviceimage/" + findImageAdvice[i].split("/")[4]
-          );
-          AdviceResizeImageArray.push(
-            "thumb/" + findImageAdvice[i].split("/")[4]
-          );
-          const totalAdviceImageArray = AdviceImageArray.concat(
-            AdviceResizeImageArray
-          );
+          const s3 = new aws.S3({
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.AWS_REGION,
+          });
 
+          const params = {
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: findImageAdvice[i],
+          };
 
-          try {
-            const s3 = new aws.S3({
-              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-              region: process.env.AWS_REGION,
-            });
-
-            const params = {
-              Bucket: process.env.AWS_BUCKET_NAME,
-              Key: totalAdviceImageArray[i],
-            };
-
-            s3.deleteObject(params, function (err, data) {
-              if (err) {
-                console.log(err, err.stack);
-              } else {
-                res.status(200);
-                next();
-              }
-            });
-          } catch (error) {
-            next(error);
-          }
+          s3.deleteObject(params, function (err, data) {});
         }
         await this.adviceImageService.imageDelete(adviceId);
 
         const imageUrl = images.map((url) => url.location);
-        const resizeUrl = [];
-        for (let i = 0; i < images.length; i++) {
-          resizeUrl.push(
-            images[i].location.replace(/\/adviceimage\//, "/thumb/")
-          );
-        }
-        await this.adviceImageService.createAdviceImage(
-          adviceId,
-          imageUrl,
-          resizeUrl
-        );
+
+        await this.adviceImageService.createAdviceImage(adviceId, imageUrl);
       }
 
       // 타이틀 수정
@@ -219,26 +149,15 @@ class AdviceController {
     const findAdvice = await this.adviceService.findAllAdviceOne(adviceId);
 
     try {
-      if (userKey !== findAdvice[0].userKey) {
+      if (userKey !== findAdvice.userKey) {
         return res.status(400).json({ errorMessage: "권한이 없습니다." });
       }
 
       const findDeleteImages = await this.adviceImageService.adviceImageFind(
         adviceId
       );
-      const findDeleteImagesArray = [];
-      const AdviceResizeDeleteImageArray = [];
+
       for (let i = 0; i < findDeleteImages.length; i++) {
-        findDeleteImagesArray.push(
-          "adviceimage/" + findDeleteImages[i].split("/")[4]
-        );
-        AdviceResizeDeleteImageArray.push(
-          "thumb/" + findDeleteImages[i].split("/")[4]
-        );
-        const totalAdviceDeleteImageArray = findDeleteImagesArray.concat(
-          AdviceResizeDeleteImageArray
-        );
-        console.log(totalAdviceDeleteImageArray);
         const s3 = new aws.S3({
           accessKeyId: process.env.AWS_ACCESS_KEY_ID,
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -247,17 +166,10 @@ class AdviceController {
 
         const params = {
           Bucket: process.env.AWS_BUCKET_NAME,
-          Key: totalAdviceDeleteImageArray[i],
+          Key: findDeleteImages[i],
         };
 
-        s3.deleteObject(params, function (err, data) {
-          if (err) {
-            console.log(err, err.stack);
-          } else {
-            res.status(200);
-            next();
-          }
-        });
+        s3.deleteObject(params, function (err, data) {});
       }
 
       //게시물 삭제
@@ -285,6 +197,7 @@ class AdviceController {
   reportAdvice = async (req, res, next) => {
     const { userKey } = res.locals.user;
     const { adviceId } = req.params;
+    const { why } = req.body;
 
     try {
       if (userKey == 0) {
@@ -292,12 +205,18 @@ class AdviceController {
       }
       const adviceUpdate = await this.adviceService.reportAdvice(
         userKey,
-        adviceId
+        adviceId,
+        why
       );
+
+      if (adviceUpdate === false) {
+        return res.status(400).json({ Message: "중복된 신고 입니다." });
+      }
 
       let mes;
       if (!adviceUpdate) {
         mes = "지금 자신의 글을 신고한다고??";
+        return res.status(400).json({ Message: mes });
       } else {
         mes = "신고";
       }

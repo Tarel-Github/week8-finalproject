@@ -1,12 +1,48 @@
-const { DocDB } = require("aws-sdk");
 const NoteRepository = require("../repositories/note.repository");
+
+const dayjs = require("dayjs");
+const timezone = require("dayjs/plugin/timezone");
+const utc = require("dayjs/plugin/utc");
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault("Asia/Seoul");
 
 class NoteService {
   noteRepository = new NoteRepository();
 
-  createNote = async (tUser, fUser, note) => {
-    const createNote = await this.noteRepository.createNote(tUser, fUser, note);
+  createNote = async (tUser, fUser, title, category) => {
+    const createNote = await this.noteRepository.createNote(
+      tUser,
+      fUser,
+      title,
+      category
+    );
     return createNote;
+  };
+
+  allRooms = async (userKey) => {
+    const allRooms = await this.noteRepository.allRooms(userKey);
+
+    const rooms = allRooms.map((room) => {
+      let nickname;
+      let recentDate;
+      room.User1.userKey == userKey
+        ? (nickname = room.User2.nickname)
+        : (nickname = room.User1.nickname);
+
+      room.Notes.length
+        ? (recentDate = room.Notes.createdAt)
+        : (recentDate = room.createdAt);
+      const date = dayjs(recentDate).tz().format("YYYY.MM.DD HH:mm");
+      return {
+        roomId: room.roomId,
+        title: room.title,
+        nickname: nickname,
+        recentDate: date,
+      };
+    });
+
+    return rooms;
   };
 
   allMyNote = async (userKey) => {
@@ -26,18 +62,23 @@ class NoteService {
     return myNotePage;
   };
 
-  findNoteOne = async (noteId, userKey) => {
-    const findNoteOne = await this.noteRepository.findNoteOne(noteId, userKey);
-    return {
-      noteId: findNoteOne.noteId,
-      fUser: findNoteOne.fUser,
-      fUserNickname: findNoteOne.fUserData.nickname,
-      fUserImg: findNoteOne.fUserData.userImg,
-      tUser: findNoteOne.tUser,
-      tUserNickname: findNoteOne.tUserData.nickname,
-      tUserImg: findNoteOne.tUserData.userImg,
-      note: findNoteOne.note,
-    };
+  roadNotes = async (roomId, userKey) => {
+    const roadNotes = await this.noteRepository.roadNotes(roomId);
+    //대화상대 닉네임
+    let nickname;
+    roadNotes[0].user1 !== userKey
+      ? (nickname = roadNotes[0].NoteRoom.User2.nickname)
+      : (nickname = roadNotes[0].NoteRoom.User1.nickname);
+    const notes = roadNotes.map((note) => {
+      const date = dayjs(note.createdAt).tz().format("YYYY.MM.DD HH:mm");
+      return {
+        userKey: note.userKey,
+        note: note.note,
+        date: date,
+      };
+    });
+
+    return { notes, nickname };
   };
 
   deleteNote = async (noteId, userKey) => {

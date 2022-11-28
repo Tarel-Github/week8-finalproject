@@ -21,9 +21,7 @@ class UserRepository {
       password: hashed,
       isAdult: isAdult,
       userImg:
-        "https://imgfiles-cdn.plaync.com/file/LoveBeat/download/20200204052053-LbBHjntyUkg2jL3XC3JN0-v4",
-      resizeImg:
-        "https://imgfiles-cdn.plaync.com/file/LoveBeat/download/20200204052053-LbBHjntyUkg2jL3XC3JN0-v4",
+        "https://imgfiles-cdn.plaync.com/file/LoveBeat/download/20200204052053-LbBHjntyUkg2jL3XC3JN0-v4"
     });
   };
 
@@ -34,6 +32,12 @@ class UserRepository {
     });
   };
 
+  findUserImage = async (userKey) => {
+    return await User.findOne({
+      where: { userKey: userKey },
+    });
+  };  
+
   findNickname = async (nickname) => {
     return await User.findOne({ where: { nickname: nickname } });
   };
@@ -42,12 +46,20 @@ class UserRepository {
     return await User.findOne({ where: { userId: userId } });
   };
 
-  uploadUserImage = async (imageUrl, resizeUrl, userKey) => {
+  uploadUserImage = async (findUserImage, userKey) => {
     const updateImageUrl = await User.update(
-      { userImg: imageUrl, resizeImg: resizeUrl },
+      { userImg: findUserImage},
       { where: { userKey } }
     );
     return updateImageUrl;
+  };
+
+  //메세지 오픈 횟수 +1
+  messageCountUp = async (userKey) => {
+    return await User.increment(
+      { msgOpenCount: 1 },
+      { where: { userKey: userKey } }
+    );
   };
 
   totalChoice = async (userKey) => {

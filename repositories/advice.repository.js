@@ -9,12 +9,6 @@ const {
 } = require("../models");
 const { Op } = require("sequelize");
 const AdviceReport = require("../schemas/adviceReport");
-// const dayjs = require("dayjs");
-// const timezone = require("dayjs/plugin/timezone");
-// const utc = require("dayjs/plugin/utc");
-// dayjs.extend(utc);
-// dayjs.extend(timezone);
-// dayjs.tz.setDefault("Asia/Seoul");
 
 class AdviceRepository {
   //조언 게시글 업로드
@@ -47,7 +41,7 @@ class AdviceRepository {
           [Op.like]: "%" + keyword + "%",
         },
       },
-      include: [{ model: Comment }],
+      include: [{ model: Comment }, { model: Category }],
     });
     return searchResult;
   };
@@ -63,7 +57,7 @@ class AdviceRepository {
   // 조언 게시물 전체 조회
   findAllAdvice = async () => {
     const findAllAdvice = await Advice.findAll({
-      // 오름차순: ASC, 내림차순 : DESC
+      order: [["adviceId", "DESC"]], // 오름차순: ASC, 내림차순 : DESC
       include: [
         { model: User, attributes: ["nickname", "userImg"] },
         { model: Category },
@@ -71,8 +65,6 @@ class AdviceRepository {
           model: Comment,
           include: [{ model: CommentLike }, { model: User }],
         },
-
-        //{ model: AdviceBM, where: { userKey: userKey }}, // 북마크를 받아와야하면 쓰자
       ],
     });
     return findAllAdvice;
@@ -81,6 +73,7 @@ class AdviceRepository {
   // 조언 게시물 카테고리별 조회
   findCategoryAdvice = async (categoryId) => {
     const findCategiryAdvice = await Advice.findAll({
+      order: [["adviceId", "DESC"]],
       where: { categoryId: categoryId },
       include: [
         { model: User, attributes: ["nickname", "userImg"] },
@@ -89,7 +82,6 @@ class AdviceRepository {
           model: Comment,
           include: [{ model: CommentLike }, { model: User }],
         },
-        //{ model: AdviceBM, where: { userKey: userKey } }, // 북마크를 받아와야하면 쓰자
       ],
     });
     return findCategiryAdvice;
@@ -102,9 +94,10 @@ class AdviceRepository {
       include: [
         { model: User, attributes: ["userKey", "nickname", "userImg"] },
         { model: AdviceBM, where: { userKey: userKey }, required: false },
-        { model: AdviceImage, attributes: ["adviceImageId", "resizeImage"] },
+        { model: AdviceImage, attributes: ["adviceImageId", "adviceImage"] },
         {
           model: Comment,
+          order: [["commentId", "DESC"]],
           include: [{ model: CommentLike }, { model: User }],
         },
         { model: Category },
@@ -159,7 +152,10 @@ class AdviceRepository {
 
   //내가 쓴 조언글 조회
   myadvice = async (userKey) => {
-    return await Advice.findAll({ where: { userKey: userKey } });
+    return await Advice.findAll({
+      where: { userKey: userKey },
+      include: { model: Category },
+    });
   };
 
   // 조언 게시글 신고하기
@@ -174,6 +170,21 @@ class AdviceRepository {
       targetName,
     });
     return reportAdvice;
+  };
+
+  // 중복신고 방지
+  reportRedup = async (reporterId, suspectId, targetId, targetName) => {
+    const data = {
+      reporterId: Number(reporterId),
+      suspectId: Number(suspectId),
+      targetId: Number(targetId),
+      targetName: targetName,
+    };
+
+    const result = await AdviceReport.find({
+      ids: data,
+    });
+    return result;
   };
 }
 

@@ -12,8 +12,8 @@ const adviceController = new AdviceController();
 //메인페이지
 router.get("/", authMiddleware, userController.mainPage);
 
-//메인페이지 메세지 열기
-router.get("/msg", authMiddleware, userController.dailyMessage);
+//행운의편지 메세지 열기
+router.put("/msg", authMiddleware, userController.dailyMessage);
 
 //회원가입
 router.post("/signup", LoginMiddleware, userController.signup);
@@ -55,10 +55,6 @@ router.delete(
 );
 
 //리워드
-router.put(
-  "/mypage/reword/:missionId",
-  authMiddleware,
-  userController.getReword
-);
+router.put("/reword/:missionId", authMiddleware, userController.getReword);
 
 module.exports = router;

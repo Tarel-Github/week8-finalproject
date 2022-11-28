@@ -5,20 +5,35 @@ class NoteController {
   noteService = new NoteService();
 
   // 쪽지 등록
-  creatNote = async (req, res, next) => {
-    const { userKey: fUser } = res.locals.user;
-    const { userKey: tUser } = req.params;
-    const { note } = req.body;
+  createroom = async (req, res, next) => {
     try {
-      const creatNote = await this.noteService.createNote(tUser, fUser, note);
-      console.log(creatNote);
+      const { userKey: fUser } = res.locals.user;
+      const { userKey: tUser, title, category } = req.body;
 
-      res.status(200).json({ msg: "쪽지 전달 완료" });
+      const creatRoom = await this.noteService.createNote(
+        tUser,
+        fUser,
+        title,
+        category
+      );
+
+      const roomId = creatRoom.roomId;
+      res.status(200).json({ roomId });
     } catch (error) {
       next(error);
     }
   };
 
+  roomlist = async (req, res, next) => {
+    try {
+      const { userKey } = res.locals.user;
+      const roomlist = await this.noteService.allRooms(userKey);
+
+      return res.status(200).json(roomlist);
+    } catch (error) {
+      next(error);
+    }
+  };
   // 쪽지 목록 페이지
   allMyNote = async (req, res, next) => {
     const { userKey } = res.locals.user;
@@ -26,7 +41,6 @@ class NoteController {
     try {
       const myNotePage = await this.noteService.allMyNote(userKey);
       // const test = myNotePage.map((x) => x.recipient)
-      // console.log(test, "나오나")
       return res.status(200).json({ myNotePage });
     } catch (err) {
       next(err);
@@ -34,15 +48,16 @@ class NoteController {
   };
 
   // 보낸 쪽지 상세 페이지
-  findNoteOne = async (req, res, next) => {
-    const { userKey } = res.locals.user;
-    const { noteId } = req.params;
-
-    
-
+  roadNotes = async (req, res, next) => {
     try {
-      const findNoteOne = await this.noteService.findNoteOne(noteId, userKey);
-      return res.status(200).json({ findNoteOne });
+      const { userKey } = res.locals.user;
+      const { roomId } = req.params;
+
+      const { notes, nickname } = await this.noteService.roadNotes(
+        roomId,
+        userKey
+      );
+      return res.status(200).json({ notes: notes, nickname: nickname });
     } catch (err) {
       next(err);
     }
@@ -53,7 +68,6 @@ class NoteController {
     const { noteId } = req.params;
     try {
       const myNotePage = await this.noteService.findNoteOne(noteId, userKey);
-      //console.log(myNotePage.fUser, "쪽지 찾기")
 
       if (userKey !== myNotePage.fUser) {
         return res.status(400).send({ message: "권한이 없습니다." });

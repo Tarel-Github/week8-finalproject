@@ -1,9 +1,4 @@
-const {
-  Comment,
-  CommentLike,
-  ReportSQL,
-  ReportSQLComment,
-} = require("../models"); //모델 데이터를 가져오고
+const { Comment, CommentLike, Reply } = require("../models"); //모델 데이터를 가져오고
 const { Op } = require("sequelize");
 const Report = require("../schemas/report");
 
@@ -90,7 +85,7 @@ class CommentRepository {
     return dataId;
   };
 
-  //덧글 신고하기, 신고가 중복되는가?//몽고
+  //덧글 신고하기, 신고가 중복되는가?
   reportRedup = async (reporterId, suspectId, targetId, targetName) => {
     const data = {
       reporterId: Number(reporterId),
@@ -106,20 +101,7 @@ class CommentRepository {
     return result;
   };
 
-  //덧글 신고하기, 신고가 중복되는가?//시퀄
-  reportRedupSQL = async (reporterId, suspectId, targetId, targetName) => {
-    targetId *= 1;
-    const commentId = targetId;
-    const result = await ReportSQLComment.findOne({
-      where: {
-        [Op.and]: [{ reporterId }, { suspectId }, { commentId }],
-      },
-    });
-
-    return result;
-  };
-
-  //덧글 신고하기//몽고
+  //덧글 신고하기
   reportComment = async (reporterId, suspectId, targetId, targetName, why) => {
     const date = new Date();
     const reportId = date.valueOf();
@@ -146,38 +128,97 @@ class CommentRepository {
     });
     return result;
   };
-
-  //덧글 신고하기 (SQL)
-  reportSQL = async (reporterId, suspectId, targetId, targetName, why) => {
-    //const date = new Date();
-    //const reportId = date.valueOf();
-    targetId *= 1;
-    const commentId = targetId;
-    const data = await Comment.findByPk(commentId);
-    const content = data.comment;
-    const guilty = false;
-    const processing = false;
-    //const createdAt = date;
-    //const updatedAt = date;
-    const SQLIds = await ReportSQLComment.create({
-      reporterId,
-      suspectId,
-      commentId,
-    });
-    const SQLdata = await ReportSQLComment.findOne({
+  //여기서부터 대댓글 기능===============
+  //덧글 데이터 가져오기
+  infoComment = async (commentId) => {
+    const data = await Comment.findOne({
       where: {
-        [Op.and]: [{ reporterId }, { suspectId }, { commentId }],
+        [Op.and]: [{ commentId }],
       },
     });
-    const RSId = SQLdata.RSId;
-    const result = await ReportSQL.create({
-      RSId,
-      why,
-      content,
-      guilty,
-      processing,
+    return data;
+  };
+
+  //대댓글 데이터 가져오기
+  //라우트값이 없다면 주 댓글에 대댓글이 달린다.
+  infoReply = async (commentId, route) => {
+    if (route) {
+      const data = await Reply.findAll({
+        where: {
+          [Op.and]: [{ commentId }, { route }],
+        },
+      });
+      return data;
+    } else {
+      const data = await Reply.findAll({
+        where: {
+          [Op.and]: [{ commentId }],
+        },
+      });
+      return data;
+    }
+  };
+
+  //특정 배열 길이의 대댓글을 가져오기
+  replyByLength = async (commentId, count) => {
+    const data = await Reply.findAll({
+      where: {
+        [Op.and]: [{ commentId }, { count: count }],
+      },
     });
-    return result;
+    return data;
+  };
+
+  //대댓글 생성하기
+  createReply = async (userKey, commentId, route, count, comment) => {
+    const data = await Reply.create({
+      userKey,
+      commentId,
+      route,
+      count,
+      comment,
+    });
+    return data;
+  };
+
+  //길이가 하나일때, 데이터 가져오기
+  topReply = async (commentId) => {
+    const data = await Reply.findAll({
+      where: {
+        [Op.and]: [{ commentId }, { count: 1 }],
+      },
+    });
+    return data;
+  };
+
+  //해당 코멘트의 전체 대댓글 가져오기
+  getReComment = async (commentId) => {
+    const data = await Reply.findAll({
+      where: {
+        [Op.and]: [{ commentId }],
+      },
+    });
+    return data;
+  };
+
+  checkRe = async (replyId) => {
+    const data = await Reply.findOne({
+      where: {
+        [Op.and]: [{ replyId }],
+      },
+    });
+    return data;
+  };
+
+  putRe = async (replyId, userKey, re) => {
+    const putRe = await Reply.update({ comment: re }, { where: { replyId } });
+    return putRe;
+  };
+
+  deleteRe = async (replyId, userKey) => {
+    const comment = "삭제된 덧글입니다.";
+    const deleteRe = await Reply.update({ comment }, { where: { replyId } });
+    return deleteRe;
   };
 }
 

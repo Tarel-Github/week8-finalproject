@@ -11,7 +11,7 @@ const noteRouter = require("./note.routes");
 // const kakaoCallback = require("./kakao.routes")
 const kakaoRouter = require("./kakao.routes");
 const managerRouter = require("./manager.routes");
-const managerRouterSQL = require("./manager.sql.routes");
+const reportRouter = require("./report.routes");
 
 passportConfig();
 
@@ -32,12 +32,12 @@ router.use("/advice/comment", commentRouter);
 router.use("/", kakaoRouter);
 
 // 쪽지 관련
-router.use("/note", noteRouter);
+router.use("/", noteRouter);
 
 // 관리자 관련
 router.use("/", managerRouter);
 
-// 관리자 관련,시퀄라이즈
-router.use("/sql", managerRouterSQL);
+// 신고 관련
+router.use("/", reportRouter);
 
 module.exports = router;

@@ -18,14 +18,14 @@ module.exports = (sequelize, DataTypes) => {
         sourceKey: "commentId",
       });
 
+      this.hasMany(models.Reply, {
+        foreignKey: "commentId",
+        sourceKey: "commentId",
+      });
+
       this.belongsTo(models.Advice, {
         foreignKey: "adviceId",
         targetKey: "adviceId",
-      });
-
-      this.hasMany(models.ReportSQLComment, {
-        foreignKey: "commentId",
-        sourceKey: "commentId",
       });
     }
   }

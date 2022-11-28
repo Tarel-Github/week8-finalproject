@@ -37,7 +37,6 @@ class UserController {
     try {
       // const { email, password } = await joi.loginSchema.validateAsync(req.body);
       const { userId, password } = req.body;
-      console.log(userId, password);
 
       const { accessToken, refreshToken, nickname } =
         await this.userService.verifyUser(userId, password);
@@ -46,7 +45,9 @@ class UserController {
       await redisCli.set(userId, refreshToken);
 
       res.cookie("accesstoken", accessToken);
-      res.cookie("refreshtoken", refreshToken);
+      res.cookie("refreshtoken", refreshToken, {
+        httpOnly: true,
+      });
 
       return res
         .status(200)
@@ -61,7 +62,6 @@ class UserController {
     try {
       const { nickname, userId } = req.body;
 
-      console.log(nickname, userId);
       if (!nickname && !userId) {
         return res.status(400).json({ message: "잘못된 요청입니다" });
       }
@@ -88,26 +88,39 @@ class UserController {
       const { userKey } = res.locals.user;
       const mainpage = await this.userService.mainPage(userKey);
 
-      return res.status(200).json(mainpage);
+      const { dailyData } = await this.userService.getDailymessage(userKey);
+
+      return res
+        .status(200)
+        .json({ mainpage: mainpage, dailyMessage: dailyData.msg });
     } catch (error) {
       next(error);
     }
   };
 
+  //행운메세지 open 업데이트
   dailyMessage = async (req, res, next) => {
     try {
       const { userKey } = res.locals.user;
       if (userKey == 0) {
         return res.status(401).json({ message: "로그인이 필요한 기능입니다." });
       }
-      const getDailyMessage = await this.userService.getDailymessage(userKey);
+      const { isOpen } = await this.userService.getDailymessage(userKey);
 
-      return res.status(200).json({ dailyMessage: getDailyMessage });
+      if (!isOpen) {
+        await this.userService.updateMessageOpen(userKey);
+        return res
+          .status(200)
+          .json({ message: "오늘 처음 메세지를 열었습니다!" });
+      }
+
+      return res.status(401).json({ message: "잘못된 요청입니다" });
     } catch (error) {
       next(error);
     }
   };
 
+  //마이페이지 조회
   mypage = async (req, res, next) => {
     try {
       const { userKey } = res.locals.user;
@@ -120,6 +133,7 @@ class UserController {
     }
   };
 
+  //검색 조회
   search = async (req, res, next) => {
     try {
       const { userKey } = res.locals.user;
@@ -148,6 +162,7 @@ class UserController {
     }
   };
 
+  //리워드 휙득요청
   getReword = async (req, res, next) => {
     try {
       const { userKey } = res.locals.user;
@@ -155,9 +170,18 @@ class UserController {
       if (userKey == 0) {
         return res.status(400).send({ message: "로그인이 필요합니다." });
       }
-      await this.userService.getReword(userKey, missionId);
+      const isComplete = await this.userService.isComplete(userKey, missionId);
+      if (!isComplete) {
+        return res.status(400).json({ message: "미션을 완료해 주세요" });
+      }
 
-      return res.status(200).json({ message: "리워드 휙득완료!" });
+      const [isGet] = await this.userService.getReword(userKey, missionId);
+
+      if (isGet) {
+        return res.status(200).json({ message: "리워드 휙득완료!" });
+      } else {
+        return res.status(400).json({ message: "이미 휙득 했습니다" });
+      }
     } catch (error) {
       next(error);
     }
@@ -172,17 +196,13 @@ class UserController {
     const image = req.file;
     const { nickname } = req.body;
 
-    const findUser = await this.userService.mypage(userKey)
+    const findUser = await this.userService.findUserImage(userKey);
+    const findUserImage = findUser.userImage;
 
     try {
       //이미지 수정
       if (image) {
-        const findUserImage = findUser.userImage.split("/")[4];
-        const findUserLastImage = `profileimage/${findUserImage}`;
-        const findUserLastResizeImage = `thumb/${findUserImage}`;
-        const userImageArray = [findUserLastImage, findUserLastResizeImage];
-
-        for (let i = 0; i < userImageArray.length; i++) {
+        for (let i = 0; i < findUserImage.length; i++) {
           const s3 = new aws.S3({
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,
             secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -191,22 +211,14 @@ class UserController {
 
           const params = {
             Bucket: process.env.AWS_BUCKET_NAME,
-            Key: userImageArray[i],
+            Key: findUserImage[i],
           };
 
-          s3.deleteObject(params, function (err, data) {
-            if (err) {
-              console.log(err, err.stack);
-            } else {
-              res.status(200);
-              next();
-            }
-          });
+          s3.deleteObject(params, function (err, data) {});
         }
 
         const imageUrl = image.location;
-        const resizeUrl = imageUrl.replace(/\/profileimage\//, "/thumb/");
-        await this.userService.uploadUserImage(imageUrl, resizeUrl, userKey);
+        await this.userService.uploadUserImage(imageUrl, userKey);
       }
 
       if (nickname) {

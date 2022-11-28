@@ -35,8 +35,6 @@ class UserService {
     const DailyArray = await this.dailyMsgRepository.allMsg();
     const msgArray = DailyArray.map((x) => x.msg);
     const msg = msgArray[Math.floor(Math.random() * msgArray.length)];
-    console.log(createUser.userKey);
-    console.log(msg);
     await redisCli.hSet(`${createUser.userKey}`, {
       msg: msg,
       isOpen: 0,
@@ -56,12 +54,12 @@ class UserService {
       { userId: user.userId, userKey: user.userKey },
       process.env.SECRET_KEY
       // {
-      //   expiresIn: "5s",
+      //   expiresIn: "5h",
       // }
     );
 
     const refreshToken = jwt.sign({}, process.env.SECRET_KEY, {
-      expiresIn: "1h",
+      expiresIn: "7d",
     });
     const nickname = user.nickname;
     return { accessToken, refreshToken, nickname };
@@ -87,7 +85,9 @@ class UserService {
     const getAdvice = await this.adviceRepository.getAdvice();
     const dailyData = await redisCli.hGetAll(`${userKey}`);
     let isOpen;
-    dailyData.isOpen == "0" ? (isOpen = false) : (isOpen = true);
+    dailyData.isOpen == "0" || userKey == 0
+      ? (isOpen = false)
+      : (isOpen = true);
     const adviceData = getAdvice.map((post) => {
       return {
         adviceId: post.adviceId,
@@ -108,12 +108,17 @@ class UserService {
   };
 
   getDailymessage = async (userKey) => {
-    console.log(userKey);
+    const dailyData = await redisCli.hGetAll(`${userKey}`);
+    let isOpen;
+    dailyData.isOpen == "0" ? (isOpen = false) : (isOpen = true);
+    return { isOpen, dailyData };
+  };
+
+  updateMessageOpen = async (userKey) => {
     await redisCli.hSet(`${userKey}`, {
       isOpen: 1,
     });
-    const dailyData = await redisCli.hGetAll(`${userKey}`);
-    return dailyData.msg;
+    await this.userRepository.messageCountUp(userKey);
   };
 
   //마이페이지 데이터 가져오기
@@ -131,14 +136,38 @@ class UserService {
     }
     const user = await this.userRepository.findUser(userKey);
 
+    const userImage = [
+      "https://hh99projectimage-1.s3.ap-northeast-2.amazonaws.com/profileimage/" +
+        user.userImg,
+    ];
+    const userResizeImage = [
+      "https://hh99projectimage-1.s3.ap-northeast-2.amazonaws.com/profileimage-resize/" +
+        user.userImg,
+    ];
+
+    const totalUserImage = userImage.concat(userResizeImage);
+    console.log(totalUserImage);
+
     const result = {
       userKey: userKey,
       nickname: user.nickname,
-      userImage: user.resizeImg,
+      userImage: totalUserImage,
       totalAdviceComment: user.Comments.length,
       totalChoicePick: user.isChoices.length,
     };
 
+    return result;
+  };
+
+  findUserImage = async (userKey) => {
+    const user = await this.userRepository.findUserImage(userKey);
+    const userImage = ["profileimage/" + user.userImg];
+    const userResizeImage = ["profileimage-resize/" + user.userImg];
+    const totalUserImage = userImage.concat(userResizeImage);
+    console.log(totalUserImage);
+    const result = {
+      userImage: totalUserImage,
+    };
     return result;
   };
 
@@ -188,20 +217,20 @@ class UserService {
         viewCount: post.viewCount,
         commentCount: post.Comments.length,
         userKey: post.userKey,
+        category: post.Category.name,
       };
     });
 
     return { choice: choiceData, advice: adviceData };
   };
 
-  uploadUserImage = async (imageUrl, resizeUrl, userKey) => {
+  uploadUserImage = async (imageUrl, userKey) => {
     const foundData = await this.userRepository.findUser(userKey);
-    
     if (!foundData) throw new ErrorCustom(400, "사용자가 존재하지 않습니다.");
+    const findUserImage = imageUrl.split("/")[4];
 
     const uploadImagesData = await this.userRepository.uploadUserImage(
-      imageUrl,
-      resizeUrl,
+      findUserImage,
       userKey
     );
     return uploadImagesData;
@@ -243,9 +272,17 @@ class UserService {
     const totalPost = totalAdvice + totalChoice;
 
     /**행운의 편지 열기 횟수 */
+    const totalOpen = totalReword[0].msgOpenCount;
 
     console.log(
-      `totalAdviceComment:${totalAdviceComment}, totalChoicePick:${totalChoicePick}, totalAdvice:${totalAdvice},totalChoice${totalChoice},totalPost${totalPost},viewCount:${viewCount},likeTotal:${likeTotal}`
+      `totalAdviceComment:${totalAdviceComment}, 
+      totalChoicePick:${totalChoicePick}, 
+      totalAdvice:${totalAdvice},
+      totalChoice${totalChoice},
+      totalPost${totalPost},
+      viewCount:${viewCount},
+      likeTotal:${likeTotal},
+      totalOpen:${totalOpen}`
     );
     /**모든 미션Id */
     const missionarray = [1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -266,8 +303,10 @@ class UserService {
     console.log(unCompleteMission);
     console.log(CompleteMission);
 
-    /**미완료 미션을 가져와 기준에 충족하면 */
+    /**미완료 미션을 가져와 기준에 충족하면 newCompleteMissonId 배열에 추가*/
     const mission = await this.missionRepository.mission(unCompleteMission);
+
+    /**새로 완료한 미션이 담긴 배열 */
     const newCompleteMissionId = [];
     mission.forEach((x) => {
       x.missionId;
@@ -322,25 +361,37 @@ class UserService {
         mission: i,
         isComplete: isComplete,
         isGet: isGet,
-        missonCount: {
-          totalAdviceComment: totalAdviceComment,
-          totalChoicePick: totalChoicePick,
-          totalAdvice: totalAdvice,
-          totalChoice: totalChoice,
-          totalPost: totalPost,
-          viewCount: viewCount,
-          likeTotal: likeTotal,
-        },
       });
     }
+    const data = {
+      result: result,
+      missionCount: {
+        totalAdviceComment: totalAdviceComment,
+        totalChoicePick: totalChoicePick,
+        totalAdvice: totalAdvice,
+        totalChoice: totalChoice,
+        totalPost: totalPost,
+        viewCount: viewCount,
+        likeTotal: likeTotal,
+        msgOpen: totalOpen,
+      },
+    };
 
-    return result;
+    return data;
   };
 
   getReword = async (userKey, missionId) => {
-    await this.missionRepository.getReword(userKey, missionId);
+    const isGet = await this.missionRepository.getReword(userKey, missionId);
+    return isGet;
   };
 
+  isComplete = async (userKey, missionId) => {
+    const getComplete = await this.missionRepository.isComplete(
+      userKey,
+      missionId
+    );
+    return getComplete;
+  };
   updateUserNickname = async (userKey, nickname) => {
     const findUser = await this.userRepository.findUser(userKey);
     if (!findUser) throw new ErrorCustom(400, "사용자가 존재하지 않습니다.");

@@ -2,25 +2,33 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("AdviceImages", {
-      adviceImageId: {
+    await queryInterface.createTable("Replies", {
+      replyId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      adviceId: {
+      commentId: {
         allowNull: false,
         type: Sequelize.INTEGER,
         references: {
-          model: "Advice",
-          key: "adviceId",
+          model: "Comments",
+          key: "commentId",
         },
         onDelete: "cascade",
       },
-      adviceImage: {
+      route: {
+        allowNull: false,
         type: Sequelize.STRING,
-        allowNull: true,
+      },
+      count: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+      },
+      comment: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       createdAt: {
         allowNull: false,
@@ -33,6 +41,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("AdviceImages");
+    await queryInterface.dropTable("Replies");
   },
 };

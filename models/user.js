@@ -28,14 +28,6 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "userKey",
         sourceKey: "userKey",
       });
-      // this.hasMany(models.Choice, {
-      //   foreignKey: "userKey",
-      //   sourceKey: "userKey",
-      // });
-      // this.hasMany(models.Comment, {
-      //   foreignKey: "userKey",
-      //   sourceKey: "userKey",
-      // });
       this.hasMany(models.AdviceBM, {
         foreignKey: "userKey",
         sourceKey: "userKey",
@@ -50,21 +42,15 @@ module.exports = (sequelize, DataTypes) => {
         sourceKey: "userKey",
       });
       this.hasMany(models.Note, {
-        foreignKey: "fUser",
+        foreignKey: "userKey",
         sourceKey: "userKey",
       });
-      this.hasMany(models.Note, {
-        foreignKey: "tUser",
+      this.hasMany(models.NoteRoom, {
+        foreignKey: "user1",
         sourceKey: "userKey",
       });
-
-      //신고
-      this.hasMany(models.ReportSQL, {
-        foreignKey: "reporterId",
-        sourceKey: "userKey",
-      });
-      this.hasMany(models.ReportSQL, {
-        foreignKey: "suspectId",
+      this.hasMany(models.NoteRoom, {
+        foreignKey: "user2",
         sourceKey: "userKey",
       });
     }
@@ -96,10 +82,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
       },
       userImg: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      resizeImg: {
         type: DataTypes.STRING,
         allowNull: true,
       },

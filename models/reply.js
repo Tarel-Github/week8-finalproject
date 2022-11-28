@@ -1,49 +1,59 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class Note extends Model {
+  class Reply extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
+      this.belongsTo(models.Comment, {
+        foreignKey: "commentId",
+        sourceKey: "commentId",
+      });
       this.belongsTo(models.User, {
         foreignKey: "userKey",
-        targetKey: "userKey",
-      });
-      this.belongsTo(models.NoteRoom, {
-        foreignKey: "roomId",
-        targetKey: "roomId",
+        sourceKey: "userKey",
       });
     }
   }
-  Note.init(
+  Reply.init(
     {
-      noteId: {
+      replyId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: DataTypes.INTEGER,
       },
-      roomId: {
-        allowNull: false,
-        type: DataTypes.INTEGER,
-        references: {
-          model: "NoteRoom",
-          key: "roomId",
-        },
-      },
       userKey: {
         allowNull: false,
         type: DataTypes.INTEGER,
         references: {
-          model: "Users",
+          model: "User",
           key: "userKey",
         },
       },
-      note: {
+      commentId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: "Comment",
+          key: "commentId",
+        },
+        onDelete: "cascade",
+      },
+      route: {
+        allowNull: false,
         type: DataTypes.STRING,
+      },
+      count: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+      },
+      comment: {
+        type: DataTypes.STRING,
+        allowNull: false,
       },
       createdAt: {
         allowNull: false,
@@ -56,8 +66,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Note",
+      modelName: "Reply",
     }
   );
-  return Note;
+  return Reply;
 };
