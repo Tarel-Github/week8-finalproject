@@ -2,20 +2,12 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Notes", {
-      noteId: {
+    await queryInterface.createTable("CommentLikes", {
+      id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
-      },
-      roomId: {
-        allowNull: false,
-        type: Sequelize.INTEGER,
-        references: {
-          model: "NoteRooms",
-          key: "roomId",
-        },
       },
       userKey: {
         allowNull: false,
@@ -25,9 +17,23 @@ module.exports = {
           key: "userKey",
         },
       },
-      note: {
-        type: Sequelize.STRING,
+      commentId: {
+        allowNull: false,
+        type: Sequelize.INTEGER,
+        references: {
+          model: "Comments",
+          key: "commentId",
+        },
+        onDelete: "cascade",
       },
+      // choiceId: {
+      //   allowNull: false,
+      //   type: Sequelize.INTEGER,
+      //   references: {
+      //       model: "Choices",
+      //       key: "choiceId",
+      //   },
+      // },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -39,6 +45,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Notes");
+    await queryInterface.dropTable("CommentLikes");
   },
 };

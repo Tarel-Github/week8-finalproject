@@ -26,11 +26,11 @@ router.put("/re/:replyId", authMiddleware, commentController.putRe);
 //대댓글 삭제하기
 router.delete("/re/:replyId", authMiddleware, commentController.deleteRe);
 
-//댓글 신고하기
+//조언 댓글 채택
 router.put(
-  "/report/:commentId",
+  "/select/:commentId",
   authMiddleware,
-  commentController.reportComment
+  commentController.selectComment
 );
 
 module.exports = router;

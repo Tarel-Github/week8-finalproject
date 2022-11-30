@@ -41,22 +41,18 @@ class ChoiceService {
         let isChoice;
         choice.ChoiceBMs.length ? (isBookMark = true) : (isBookMark = false);
         choice.isChoices.length ? (isChoice = true) : (isChoice = false);
-        const a = choice.choice1Per;
-        const b = choice.choice2Per;
-        const sum = a + b;
-        const res_a = (a / sum) * 100;
         const createdAt = dayjs(choice.createdAt)
           .tz()
-          .format("YYYY.MM.DD HH:mm");
-        const endTime = dayjs(choice.endTime).format("YYYY.MM.DD HH:mm");
+          .format("YYYY/MM/DD HH:mm");
+        const endTime = dayjs(choice.endTime).format("YYYY/MM/DD HH:mm");
         return {
           choiceId: choice.choiceId,
           userKey: choice.userKey,
           title: choice.title,
           choice1Name: choice.choice1Name,
           choice2Name: choice.choice2Name,
-          choice1Per: Math.round(res_a),
-          choice2Per: 100 - Math.round(res_a),
+          choice1: choice.choice1Per,
+          choice2: choice.choice2Per,
           userImage: choice.User.userImg,
           nickname: choice.User.nickname,
           createdAt: createdAt,
@@ -111,7 +107,7 @@ class ChoiceService {
         let result_a = (absolute_a / sum) * 100;
         const date = dayjs(findMychoice[i].createdAt)
           .tz()
-          .format("YYYY.MM.DD HH:mm");
+          .format("YYYY/MM/DD HH:mm");
         data[i] = {
           choiceId: findMychoice[i].choiceId,
           userKey: findMychoice[i].userKey,
@@ -127,6 +123,7 @@ class ChoiceService {
           choiceCount: findMychoice[i].choiceCount,
           isBookMark: Boolean(isBookMark),
           isChoice: Boolean(isChoice),
+          isEnd: findMychoice[i].isEnd,
         };
       }
       return data;

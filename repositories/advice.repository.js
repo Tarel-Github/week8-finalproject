@@ -5,10 +5,12 @@ const {
   AdviceImage,
   Comment,
   CommentLike,
+  CommentSelect,
   Category,
 } = require("../models");
 const { Op } = require("sequelize");
 const AdviceReport = require("../schemas/adviceReport");
+
 
 class AdviceRepository {
   //조언 게시글 업로드
@@ -98,9 +100,10 @@ class AdviceRepository {
         {
           model: Comment,
           order: [["commentId", "DESC"]],
-          include: [{ model: CommentLike }, { model: User }],
+          include: [{ model: CommentLike }, { model : CommentSelect }, { model: User }],
         },
         { model: Category },
+        
       ],
     });
     return AdviceOne;
@@ -153,39 +156,12 @@ class AdviceRepository {
   //내가 쓴 조언글 조회
   myadvice = async (userKey) => {
     return await Advice.findAll({
+      order: [["adviceId", "DESC"]],
       where: { userKey: userKey },
-      include: { model: Category },
+      include: [{ model: Category }, { model: User }],
     });
   };
-
-  // 조언 게시글 신고하기
-  reportAdvice = async (reporterId, suspectId, targetId, targetName) => {
-    const date = new Date();
-    const adviceReportId = date.valueOf();
-    const reportAdvice = await AdviceReport.create({
-      adviceReportId,
-      reporterId,
-      suspectId,
-      targetId,
-      targetName,
-    });
-    return reportAdvice;
-  };
-
-  // 중복신고 방지
-  reportRedup = async (reporterId, suspectId, targetId, targetName) => {
-    const data = {
-      reporterId: Number(reporterId),
-      suspectId: Number(suspectId),
-      targetId: Number(targetId),
-      targetName: targetName,
-    };
-
-    const result = await AdviceReport.find({
-      ids: data,
-    });
-    return result;
-  };
+  
 }
 
 module.exports = AdviceRepository;

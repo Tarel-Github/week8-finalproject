@@ -37,7 +37,22 @@ class AdviceService {
       const findAllAdvice = await this.adviceRepository.findAllAdvice();
 
       const data = findAllAdvice.map((post) => {
-        const date = dayjs(post.createdAt).tz().format("YYYY.MM.DD HH:mm");
+
+        const date = dayjs(post.createdAt).tz().format("YYYY/MM/DD HH:mm");
+
+        let userImage = "";
+        if (
+          post.User.userImg ==
+          "https://imgfiles-cdn.plaync.com/file/LoveBeat/download/20200204052053-LbBHjntyUkg2jL3XC3JN0-v4"
+        ) {
+          userImage =
+            "https://imgfiles-cdn.plaync.com/file/LoveBeat/download/20200204052053-LbBHjntyUkg2jL3XC3JN0-v4";
+        } else {
+          userImage =
+            "https://hh99projectimage-1.s3.ap-northeast-2.amazonaws.com/profileimage-resize/" +
+            post.User.userImg;
+        }
+
         return {
           adviceId: post.adviceId,
           userKey: post.userKey,
@@ -45,7 +60,7 @@ class AdviceService {
           title: post.title,
           content: post.content,
           createdAt: date,
-          userImage: post.User.userImg,
+          userImage: userImage,
           nickname: post.User.nickname,
           viewCount: post.viewCount,
           category: post.Category.name,
@@ -80,12 +95,29 @@ class AdviceService {
 
       return advice;
     }
-    
+
     const findCategoryAdvice = await this.adviceRepository.findCategoryAdvice(
       categoryId
     );
+
     const data = findCategoryAdvice.map((post) => {
-      const date = dayjs(post.createdAt).tz().format("YYYY.MM.DD HH:mm");
+
+      const date = dayjs(post.createdAt).tz().format("YYYY/MM/DD HH:mm");
+      
+      let userImage = "";
+      if (
+        post.User.userImg ==
+        "https://imgfiles-cdn.plaync.com/file/LoveBeat/download/20200204052053-LbBHjntyUkg2jL3XC3JN0-v4"
+      ) {
+        userImage =
+          "https://imgfiles-cdn.plaync.com/file/LoveBeat/download/20200204052053-LbBHjntyUkg2jL3XC3JN0-v4";
+      } else {
+        userImage =
+          "https://hh99projectimage-1.s3.ap-northeast-2.amazonaws.com/profileimage-resize/" +
+          post.User.userImg;
+      }
+
+
       return {
         adviceId: post.adviceId,
         userKey: post.userKey,
@@ -121,7 +153,7 @@ class AdviceService {
       return arr;
     }
     advice = chunk(data, 10)[Number(page)];
-    
+
     if (!advice) {
       advice = [];
     }
@@ -159,12 +191,17 @@ class AdviceService {
     }
 
     const comment = findOneAdvice.Comments.map((comment) => {
+      const isSelect = comment.CommentSelects.filter((select)=>select.commentId)
+      console.log(isSelect)
+      let select;
+      isSelect.length ? (select = true) : (select = false);
+
       const isLike = comment.CommentLikes.filter(
         (like) => like.userKey === userKey
       );
       let boolean;
       isLike.length ? (boolean = true) : (boolean = false);
-      const date = dayjs(comment.createdAt).tz().format("YYYY.MM.DD HH:mm");
+      const date = dayjs(comment.createdAt).tz().format("YYYY/MM/DD HH:mm");
       return {
         commentId: comment.commentId,
         userKey: comment.userKey,
@@ -174,6 +211,7 @@ class AdviceService {
         likeCount: comment.CommentLikes.length,
         createdAt: date,
         isLike: boolean,
+        isSelect: select,
       };
     });
     // filterId
@@ -191,11 +229,10 @@ class AdviceService {
     const createdAt = dayjs(findOneAdvice.createdAt)
       .tz()
       .format("YYYY/MM/DD HH:mm");
-    console.log(createdAt.replace(/\./gi, "/"));
 
     const updatedAt = dayjs(findOneAdvice.updatedAt)
       .tz()
-      .format("YYYY.MM.DD HH:mm");
+      .format("YYYY/MM/DD HH:mm");
 
     return {
       adviceId: findOneAdvice.adviceId,
@@ -251,11 +288,12 @@ class AdviceService {
     const myadvice = await this.adviceRepository.myadvice(userKey);
 
     return myadvice.map((post) => {
-      const createdAt = dayjs(post.createdAt).tz().format("YYYY.MM.DD HH:mm");
+      const createdAt = dayjs(post.createdAt).tz().format("YYYY/MM/DD HH:mm");
       return {
         adviceId: post.adviceId,
         userKey: post.userKey,
         categoryId: post.categoryId,
+        category: post.Category.name,
         title: post.title,
         content: post.content,
         createdAt: createdAt,
@@ -264,38 +302,7 @@ class AdviceService {
         viewCount: post.viewCount,
       };
     });
-  };
-
-  reportAdvice = async (userKey, adviceId, why) => {
-    //작성자 확인
-    let type = "advice";
-    const writer = await this.adviceRepository.findAdvice(adviceId);
-    const writerHost = writer.userKey;
-
-    if (userKey === writerHost) {
-      return;
-    }
-
-    const redup = await this.adviceRepository.reportRedup(
-      userKey,
-      writerHost,
-      adviceId,
-      type
-    );
-
-    if (redup[0]) {
-      const dupmes = false;
-      return dupmes;
-    }
-
-    const reportAdvice = await this.adviceRepository.reportAdvice(
-      userKey,
-      adviceId,
-      writerHost,
-      type
-    );
-    return reportAdvice;
-  };
+  };  
 }
 
 module.exports = AdviceService;

@@ -111,12 +111,10 @@ class AdviceController {
             Key: findImageAdvice[i],
           };
 
-          s3.deleteObject(params, function (err, data) {});
+          s3.deleteObject(params);
         }
         await this.adviceImageService.imageDelete(adviceId);
-
         const imageUrl = images.map((url) => url.location);
-
         await this.adviceImageService.createAdviceImage(adviceId, imageUrl);
       }
 
@@ -169,59 +167,12 @@ class AdviceController {
           Key: findDeleteImages[i],
         };
 
-        s3.deleteObject(params, function (err, data) {});
+        s3.deleteObject(params);
       }
 
       //게시물 삭제
       await this.adviceService.adviceDelete(adviceId);
       return res.status(200).json({ msg: "게시물 삭제 완료!" });
-    } catch (err) {
-      next(err);
-    }
-  };
-
-  /**내가쓴 조언글 가져오기 */
-  myadvice = async (req, res, next) => {
-    try {
-      const { userKey } = res.locals.user;
-      if (userKey == 0) {
-        return res.status(400).send({ message: "로그인이 필요합니다." });
-      }
-      const myadvice = await this.adviceService.myadvice(userKey);
-      return res.status(200).json(myadvice);
-    } catch (err) {
-      next(err);
-    }
-  };
-
-  reportAdvice = async (req, res, next) => {
-    const { userKey } = res.locals.user;
-    const { adviceId } = req.params;
-    const { why } = req.body;
-
-    try {
-      if (userKey == 0) {
-        return res.status(400).send({ message: "로그인이 필요합니다." });
-      }
-      const adviceUpdate = await this.adviceService.reportAdvice(
-        userKey,
-        adviceId,
-        why
-      );
-
-      if (adviceUpdate === false) {
-        return res.status(400).json({ Message: "중복된 신고 입니다." });
-      }
-
-      let mes;
-      if (!adviceUpdate) {
-        mes = "지금 자신의 글을 신고한다고??";
-        return res.status(400).json({ Message: mes });
-      } else {
-        mes = "신고";
-      }
-
-      res.status(200).json({ message: mes, adviceUpdate });
     } catch (err) {
       next(err);
     }

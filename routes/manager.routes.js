@@ -9,6 +9,11 @@ const managerController = new ManagerController();
 // //관리자 페이지 가져오기
 // router.get("/manager", auth, managerController.getManager);
 
+//관리자 권한 부여를 위해 모든 유저 목록을 가져오는 API
+//관리자인 사람과 아닌사람을 분리
+
+//유저를 검색하는 기능이 필요할까??
+
 //관리자 권한 부여
 router.put("/manager/appoint", auth, managerController.newManager);
 
